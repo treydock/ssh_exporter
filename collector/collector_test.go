@@ -267,6 +267,38 @@ func TestCollectorPrivateKey(t *testing.T) {
 	}
 }
 
+func TestCollectDNEKey(t *testing.T) {
+	target := &config.Target{
+		Host:       fmt.Sprintf("localhost:%d", listen),
+		User:       "test",
+		PrivateKey: "testdata/dne",
+		Timeout:    2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	metric := collector.collect()
+	if metric.FailureReason != "error" {
+		t.Errorf("Expected failure reason to be error, got %s", metric.FailureReason)
+	}
+}
+
+func TestCollectBadKey(t *testing.T) {
+	target := &config.Target{
+		Host:       fmt.Sprintf("localhost:%d", listen),
+		User:       "test",
+		PrivateKey: "testdata/id_rsa_test1.pub",
+		Timeout:    2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	metric := collector.collect()
+	if metric.FailureReason != "error" {
+		t.Errorf("Expected failure reason to be error, got %s", metric.FailureReason)
+	}
+}
+
 func setupGatherer(collector *Collector) prometheus.Gatherer {
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(collector)
