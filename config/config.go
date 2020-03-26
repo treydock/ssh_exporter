@@ -41,7 +41,6 @@ type Module struct {
 }
 
 type Target struct {
-	sync.Mutex
 	Host          string
 	User          string
 	Password      string

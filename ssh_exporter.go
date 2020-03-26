@@ -67,8 +67,6 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 			Command:       module.Command,
 			CommandExpect: module.CommandExpect,
 		}
-		target.Lock()
-		defer target.Unlock()
 		sshCollector := collector.NewCollector(target, logger)
 		registry.MustRegister(sshCollector)
 
