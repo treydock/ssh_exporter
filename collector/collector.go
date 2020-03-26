@@ -125,7 +125,8 @@ func (c *Collector) collect() Metric {
 	defer connection.Close()
 
 	go func(conn *ssh.Client) {
-		session, sessionerror := conn.NewSession()
+		var session *ssh.Session
+		session, sessionerror = conn.NewSession()
 		if sessionerror != nil {
 			return
 		}
