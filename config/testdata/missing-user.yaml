@@ -1,0 +1,3 @@
+modules:
+  default:
+    private_key: /home/prometheus/.ssh/id_rsa

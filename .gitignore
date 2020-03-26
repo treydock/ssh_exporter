@@ -1,0 +1,7 @@
+/.tarballs
+/.build
+/ssh_exporter
+/c.out
+/coverage.html
+/coverage.txt
+/ssh_exporter.yaml

@@ -1,0 +1,5 @@
+modules:
+  default:
+    user: prometheus
+    private_key: /home/prometheus/.ssh/id_rsa
+    invalid_extra_field: value
