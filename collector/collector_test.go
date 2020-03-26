@@ -83,18 +83,12 @@ func TestMain(m *testing.M) {
 
 func TestCollector(t *testing.T) {
 	expected := `
-	# HELP ssh_failure_command_error Indicates the failure was due to an error executed the configured command
-	# TYPE ssh_failure_command_error gauge
-	ssh_failure_command_error 0
-	# HELP ssh_failure_command_output Indicates the failure was due to command output not matching expected value
-	# TYPE ssh_failure_command_output gauge
-	ssh_failure_command_output 0
-	# HELP ssh_failure_error Indicates the failure was due to an error
-	# TYPE ssh_failure_error gauge
-	ssh_failure_error 0
-	# HELP ssh_failure_timeout Indicates the failure was due to timeout
-	# TYPE ssh_failure_timeout gauge
-	ssh_failure_timeout 0
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 0
+	ssh_failure{reason="error"} 0
+	ssh_failure{reason="timeout"} 0
 	# HELP ssh_success SSH connection was successful
 	# TYPE ssh_success gauge
 	ssh_success 1
@@ -113,26 +107,19 @@ func TestCollector(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_failure_command_error", "ssh_failure_command_output",
-		"ssh_failure_error", "ssh_failure_timeout", "ssh_success"); err != nil {
+		"ssh_success", "ssh_failure"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
 
 func TestCollectorCommand(t *testing.T) {
 	expected := `
-	# HELP ssh_failure_command_error Indicates the failure was due to an error executed the configured command
-	# TYPE ssh_failure_command_error gauge
-	ssh_failure_command_error 0
-	# HELP ssh_failure_command_output Indicates the failure was due to command output not matching expected value
-	# TYPE ssh_failure_command_output gauge
-	ssh_failure_command_output 0
-	# HELP ssh_failure_error Indicates the failure was due to an error
-	# TYPE ssh_failure_error gauge
-	ssh_failure_error 0
-	# HELP ssh_failure_timeout Indicates the failure was due to timeout
-	# TYPE ssh_failure_timeout gauge
-	ssh_failure_timeout 0
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 0
+	ssh_failure{reason="error"} 0
+	ssh_failure{reason="timeout"} 0
 	# HELP ssh_success SSH connection was successful
 	# TYPE ssh_success gauge
 	ssh_success 1
@@ -151,26 +138,19 @@ func TestCollectorCommand(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_failure_command_error", "ssh_failure_command_output",
-		"ssh_failure_error", "ssh_failure_timeout", "ssh_success"); err != nil {
+		"ssh_success", "ssh_failure"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
 
 func TestCollectorCommandOutputError(t *testing.T) {
 	expected := `
-	# HELP ssh_failure_command_error Indicates the failure was due to an error executed the configured command
-	# TYPE ssh_failure_command_error gauge
-	ssh_failure_command_error 0
-	# HELP ssh_failure_command_output Indicates the failure was due to command output not matching expected value
-	# TYPE ssh_failure_command_output gauge
-	ssh_failure_command_output 1
-	# HELP ssh_failure_error Indicates the failure was due to an error
-	# TYPE ssh_failure_error gauge
-	ssh_failure_error 0
-	# HELP ssh_failure_timeout Indicates the failure was due to timeout
-	# TYPE ssh_failure_timeout gauge
-	ssh_failure_timeout 0
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 1
+	ssh_failure{reason="error"} 0
+	ssh_failure{reason="timeout"} 0
 	# HELP ssh_success SSH connection was successful
 	# TYPE ssh_success gauge
 	ssh_success 0
@@ -189,26 +169,19 @@ func TestCollectorCommandOutputError(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_failure_command_error", "ssh_failure_command_output",
-		"ssh_failure_error", "ssh_failure_timeout", "ssh_success"); err != nil {
+		"ssh_success", "ssh_failure"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
 
 func TestCollectorTimeout(t *testing.T) {
 	expected := `
-	# HELP ssh_failure_command_error Indicates the failure was due to an error executed the configured command
-	# TYPE ssh_failure_command_error gauge
-	ssh_failure_command_error 0
-	# HELP ssh_failure_command_output Indicates the failure was due to command output not matching expected value
-	# TYPE ssh_failure_command_output gauge
-	ssh_failure_command_output 0
-	# HELP ssh_failure_error Indicates the failure was due to an error
-	# TYPE ssh_failure_error gauge
-	ssh_failure_error 0
-	# HELP ssh_failure_timeout Indicates the failure was due to timeout
-	# TYPE ssh_failure_timeout gauge
-	ssh_failure_timeout 1
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 0
+	ssh_failure{reason="error"} 0
+	ssh_failure{reason="timeout"} 1
 	# HELP ssh_success SSH connection was successful
 	# TYPE ssh_success gauge
 	ssh_success 0
@@ -227,26 +200,19 @@ func TestCollectorTimeout(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_failure_command_error", "ssh_failure_command_output",
-		"ssh_failure_error", "ssh_failure_timeout", "ssh_success"); err != nil {
+		"ssh_success", "ssh_failure"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
 
 func TestCollectorError(t *testing.T) {
 	expected := `
-	# HELP ssh_failure_command_error Indicates the failure was due to an error executed the configured command
-	# TYPE ssh_failure_command_error gauge
-	ssh_failure_command_error 0
-	# HELP ssh_failure_command_output Indicates the failure was due to command output not matching expected value
-	# TYPE ssh_failure_command_output gauge
-	ssh_failure_command_output 0
-	# HELP ssh_failure_error Indicates the failure was due to an error
-	# TYPE ssh_failure_error gauge
-	ssh_failure_error 1
-	# HELP ssh_failure_timeout Indicates the failure was due to timeout
-	# TYPE ssh_failure_timeout gauge
-	ssh_failure_timeout 0
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 0
+	ssh_failure{reason="error"} 1
+	ssh_failure{reason="timeout"} 0
 	# HELP ssh_success SSH connection was successful
 	# TYPE ssh_success gauge
 	ssh_success 0
@@ -265,26 +231,19 @@ func TestCollectorError(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_failure_command_error", "ssh_failure_command_output",
-		"ssh_failure_error", "ssh_failure_timeout", "ssh_success"); err != nil {
+		"ssh_success", "ssh_failure"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
 
 func TestCollectorPrivateKey(t *testing.T) {
 	expected := `
-	# HELP ssh_failure_command_error Indicates the failure was due to an error executed the configured command
-	# TYPE ssh_failure_command_error gauge
-	ssh_failure_command_error 0
-	# HELP ssh_failure_command_output Indicates the failure was due to command output not matching expected value
-	# TYPE ssh_failure_command_output gauge
-	ssh_failure_command_output 0
-	# HELP ssh_failure_error Indicates the failure was due to an error
-	# TYPE ssh_failure_error gauge
-	ssh_failure_error 0
-	# HELP ssh_failure_timeout Indicates the failure was due to timeout
-	# TYPE ssh_failure_timeout gauge
-	ssh_failure_timeout 0
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 0
+	ssh_failure{reason="error"} 0
+	ssh_failure{reason="timeout"} 0
 	# HELP ssh_success SSH connection was successful
 	# TYPE ssh_success gauge
 	ssh_success 1
@@ -303,8 +262,7 @@ func TestCollectorPrivateKey(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_failure_command_error", "ssh_failure_command_output",
-		"ssh_failure_error", "ssh_failure_timeout", "ssh_success"); err != nil {
+		"ssh_success", "ssh_failure"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }

@@ -32,22 +32,16 @@ const (
 )
 
 type Metric struct {
-	Success           bool
-	Error             bool
-	Timeout           bool
-	CommandError      bool
-	CommandExpectFail bool
+	Success       bool
+	FailureReason string
 }
 
 type Collector struct {
-	Success           *prometheus.Desc
-	Duration          *prometheus.Desc
-	Timeout           *prometheus.Desc
-	Error             *prometheus.Desc
-	CommandError      *prometheus.Desc
-	CommandExpectFail *prometheus.Desc
-	target            *config.Target
-	logger            log.Logger
+	Success  *prometheus.Desc
+	Duration *prometheus.Desc
+	Failure  *prometheus.Desc
+	target   *config.Target
+	logger   log.Logger
 }
 
 func NewCollector(target *config.Target, logger log.Logger) *Collector {
@@ -56,14 +50,8 @@ func NewCollector(target *config.Target, logger log.Logger) *Collector {
 			"SSH connection was successful", nil, nil),
 		Duration: prometheus.NewDesc(prometheus.BuildFQName(namespace, "", "duration_seconds"),
 			"How long the SSH check took in seconds", nil, nil),
-		Timeout: prometheus.NewDesc(prometheus.BuildFQName(namespace, "failure", "timeout"),
-			"Indicates the failure was due to timeout", nil, nil),
-		Error: prometheus.NewDesc(prometheus.BuildFQName(namespace, "failure", "error"),
-			"Indicates the failure was due to an error", nil, nil),
-		CommandError: prometheus.NewDesc(prometheus.BuildFQName(namespace, "failure", "command_error"),
-			"Indicates the failure was due to an error executed the configured command", nil, nil),
-		CommandExpectFail: prometheus.NewDesc(prometheus.BuildFQName(namespace, "failure", "command_output"),
-			"Indicates the failure was due to command output not matching expected value", nil, nil),
+		Failure: prometheus.NewDesc(prometheus.BuildFQName(namespace, "", "failure"),
+			"Indicates a failure", []string{"reason"}, nil),
 		target: target,
 		logger: logger,
 	}
@@ -71,19 +59,27 @@ func NewCollector(target *config.Target, logger log.Logger) *Collector {
 
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.Success
+	ch <- c.Duration
+	ch <- c.Failure
 }
 
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	level.Debug(c.logger).Log("msg", "Collecting SSH metrics", "host", c.target.Host)
+	failureReasons := []string{"error", "timeout", "command-error", "command-output"}
 	collectTime := time.Now()
 
 	metric := c.collect()
 
 	ch <- prometheus.MustNewConstMetric(c.Success, prometheus.GaugeValue, boolToFloat64(metric.Success))
-	ch <- prometheus.MustNewConstMetric(c.Timeout, prometheus.GaugeValue, boolToFloat64(metric.Timeout))
-	ch <- prometheus.MustNewConstMetric(c.Error, prometheus.GaugeValue, boolToFloat64(metric.Error))
-	ch <- prometheus.MustNewConstMetric(c.CommandError, prometheus.GaugeValue, boolToFloat64(metric.CommandError))
-	ch <- prometheus.MustNewConstMetric(c.CommandExpectFail, prometheus.GaugeValue, boolToFloat64(metric.CommandExpectFail))
+	for _, reason := range failureReasons {
+		var value float64
+		if reason == metric.FailureReason {
+			value = 1
+		} else {
+			value = 0
+		}
+		ch <- prometheus.MustNewConstMetric(c.Failure, prometheus.GaugeValue, value, reason)
+	}
 	ch <- prometheus.MustNewConstMetric(c.Duration, prometheus.GaugeValue, time.Since(collectTime).Seconds())
 }
 
@@ -98,7 +94,7 @@ func (c *Collector) collect() Metric {
 	if c.target.PrivateKey != "" {
 		auth, autherror = getPrivateKeyAuth(c.target.PrivateKey)
 		if autherror != nil {
-			metric.Error = true
+			metric.FailureReason = "error"
 			level.Error(c.logger).Log("msg", "Error setting up private key auth", "err", autherror, "host", c.target.Host)
 			return metric
 		}
@@ -115,9 +111,9 @@ func (c *Collector) collect() Metric {
 	connection, err := ssh.Dial("tcp", c.target.Host, sshConfig)
 	if err != nil {
 		if strings.Contains(err.Error(), "timeout") {
-			metric.Timeout = true
+			metric.FailureReason = "timeout"
 		} else {
-			metric.Error = true
+			metric.FailureReason = "error"
 		}
 		level.Error(c.logger).Log("msg", "Failed to establish SSH connection", "err", err, "host", c.target.Host)
 		return metric
@@ -150,18 +146,18 @@ func (c *Collector) collect() Metric {
 	case <-time.After(time.Duration(c.target.Timeout+2) * time.Second):
 		timeout = true
 		close(c1)
-		metric.Timeout = true
+		metric.FailureReason = "timeout"
 		level.Error(c.logger).Log("msg", "Timeout establishing SSH session", "host", c.target.Host)
 		return metric
 	}
 	close(c1)
 	if sessionerror != nil {
-		metric.Error = true
+		metric.FailureReason = "error"
 		level.Error(c.logger).Log("msg", "Error establishing SSH session", "err", sessionerror, "host", c.target.Host)
 		return metric
 	}
 	if commanderror != nil {
-		metric.CommandError = true
+		metric.FailureReason = "command-error"
 		level.Error(c.logger).Log("msg", "Error executing command", "err", commanderror, "host", c.target.Host, "command", c.target.Command)
 		return metric
 	}
@@ -170,7 +166,7 @@ func (c *Collector) collect() Metric {
 		if !commandExpectPattern.MatchString(commandOutput) {
 			level.Error(c.logger).Log("msg", "Command output did not match expected value",
 				"output", commandOutput, "host", c.target.Host, "command", c.target.Command)
-			metric.CommandExpectFail = true
+			metric.FailureReason = "command-output"
 			return metric
 		}
 	}
