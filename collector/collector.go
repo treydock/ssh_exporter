@@ -143,7 +143,7 @@ func (c *Collector) collect() Metric {
 
 	select {
 	case <-c1:
-	case <-time.After(time.Duration(c.target.Timeout+2) * time.Second):
+	case <-time.After(time.Duration(c.target.Timeout) * time.Second):
 		timeout = true
 		close(c1)
 		metric.FailureReason = "timeout"
