@@ -1,9 +1,11 @@
 [![Build Status](https://circleci.com/gh/treydock/ssh_exporter/tree/master.svg?style=shield)](https://circleci.com/gh/treydock/ssh_exporter)
 [![GitHub release](https://img.shields.io/github/v/release/treydock/ssh_exporter?include_prereleases&sort=semver)](https://github.com/treydock/ssh_exporter/releases/latest)
 ![GitHub All Releases](https://img.shields.io/github/downloads/treydock/ssh_exporter/total)
+![Docker Pulls](https://img.shields.io/docker/pulls/treydock/ssh_exporter)
+[![Go Report Card](https://goreportcard.com/badge/github.com/treydock/ssh_exporter)](https://goreportcard.com/report/github.com/treydock/ssh_exporter)
 [![codecov](https://codecov.io/gh/treydock/ssh_exporter/branch/master/graph/badge.svg)](https://codecov.io/gh/treydock/ssh_exporter)
 
-# SSH Prometheus exporter
+# SSH exporter
 
 The SSH exporter attempts to make an SSH connection to a remote system and optionally run a command and test output.
 
