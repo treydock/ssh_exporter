@@ -64,7 +64,7 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	level.Debug(c.logger).Log("msg", "Collecting SSH metrics", "host", c.target.Host)
+	level.Debug(c.logger).Log("msg", "Collecting SSH metrics")
 	failureReasons := []string{"error", "timeout", "command-error", "command-output"}
 	collectTime := time.Now()
 
@@ -95,7 +95,7 @@ func (c *Collector) collect() Metric {
 		auth, autherror = getPrivateKeyAuth(c.target.PrivateKey)
 		if autherror != nil {
 			metric.FailureReason = "error"
-			level.Error(c.logger).Log("msg", "Error setting up private key auth", "err", autherror, "host", c.target.Host)
+			level.Error(c.logger).Log("msg", "Error setting up private key auth", "err", autherror)
 			return metric
 		}
 	} else {
@@ -115,7 +115,7 @@ func (c *Collector) collect() Metric {
 		} else {
 			metric.FailureReason = "error"
 		}
-		level.Error(c.logger).Log("msg", "Failed to establish SSH connection", "err", err, "host", c.target.Host)
+		level.Error(c.logger).Log("msg", "Failed to establish SSH connection", "err", err)
 		return metric
 	}
 	defer connection.Close()
@@ -147,25 +147,25 @@ func (c *Collector) collect() Metric {
 		timeout = true
 		close(c1)
 		metric.FailureReason = "timeout"
-		level.Error(c.logger).Log("msg", "Timeout establishing SSH session", "host", c.target.Host)
+		level.Error(c.logger).Log("msg", "Timeout establishing SSH session")
 		return metric
 	}
 	close(c1)
 	if sessionerror != nil {
 		metric.FailureReason = "error"
-		level.Error(c.logger).Log("msg", "Error establishing SSH session", "err", sessionerror, "host", c.target.Host)
+		level.Error(c.logger).Log("msg", "Error establishing SSH session", "err", sessionerror)
 		return metric
 	}
 	if commanderror != nil {
 		metric.FailureReason = "command-error"
-		level.Error(c.logger).Log("msg", "Error executing command", "err", commanderror, "host", c.target.Host, "command", c.target.Command)
+		level.Error(c.logger).Log("msg", "Error executing command", "err", commanderror, "command", c.target.Command)
 		return metric
 	}
 	if c.target.Command != "" && c.target.CommandExpect != "" {
 		commandExpectPattern := regexp.MustCompile(c.target.CommandExpect)
 		if !commandExpectPattern.MatchString(commandOutput) {
 			level.Error(c.logger).Log("msg", "Command output did not match expected value",
-				"output", commandOutput, "host", c.target.Host, "command", c.target.Command)
+				"output", commandOutput, "command", c.target.Command)
 			metric.FailureReason = "command-output"
 			return metric
 		}

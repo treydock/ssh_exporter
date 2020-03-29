@@ -67,7 +67,7 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 			Command:       module.Command,
 			CommandExpect: module.CommandExpect,
 		}
-		sshCollector := collector.NewCollector(target, logger)
+		sshCollector := collector.NewCollector(target, log.With(logger, "target", target.Host))
 		registry.MustRegister(sshCollector)
 
 		gatherers := prometheus.Gatherers{registry}
