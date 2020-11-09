@@ -1,3 +1,7 @@
+## 0.2.0 / TBD
+
+* Update to 1.15 and update Go module dependencies
+
 ## 0.1.1 / 2020-04-01
 
 * Minor Docker fix to use correct EXPOSE
