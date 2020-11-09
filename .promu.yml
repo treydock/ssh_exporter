@@ -1,5 +1,5 @@
 go:
-  version: 1.13
+  version: 1.15
   cgo: false
 repository:
     path: github.com/treydock/ssh_exporter
