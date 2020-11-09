@@ -103,7 +103,9 @@ func TestCollector(t *testing.T) {
 	logger := log.NewLogfmtLogger(w)
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
-	if val := testutil.CollectAndCount(collector); val != 6 {
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 6 {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
@@ -134,7 +136,9 @@ func TestCollectorCommand(t *testing.T) {
 	}
 	collector := NewCollector(target, log.NewNopLogger())
 	gatherers := setupGatherer(collector)
-	if val := testutil.CollectAndCount(collector); val != 6 {
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 6 {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
@@ -165,7 +169,9 @@ func TestCollectorCommandOutputError(t *testing.T) {
 	}
 	collector := NewCollector(target, log.NewNopLogger())
 	gatherers := setupGatherer(collector)
-	if val := testutil.CollectAndCount(collector); val != 6 {
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 6 {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
@@ -196,7 +202,9 @@ func TestCollectorTimeout(t *testing.T) {
 	logger := log.NewLogfmtLogger(w)
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
-	if val := testutil.CollectAndCount(collector); val != 6 {
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 6 {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
@@ -227,7 +235,9 @@ func TestCollectorError(t *testing.T) {
 	logger := log.NewLogfmtLogger(w)
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
-	if val := testutil.CollectAndCount(collector); val != 6 {
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 6 {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
@@ -258,7 +268,9 @@ func TestCollectorPrivateKey(t *testing.T) {
 	logger := log.NewLogfmtLogger(w)
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
-	if val := testutil.CollectAndCount(collector); val != 6 {
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 6 {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
