@@ -33,6 +33,13 @@ modules:
   password:
     id: prometheus
     password: secret
+  verify:
+    user: prometheus
+    private_key: /home/prometheus/.ssh/id_rsa
+    known_hosts: /etc/ssh/ssh_known_hosts
+    command: uptime
+    command_expect: "load average"
+    timeout: 5
 ```
 
 Example with curl would query host1 with the password module and host2 with the default module.
@@ -47,6 +54,7 @@ Configuration options for each module:
 * `user` - The username for the SSH connection
 * `password` - The password for the SSH connection, required if `private_key` is not specified
 * `private_key` - The SSH private key for the SSH connection, required if `password` is not specified
+* `known_hosts` - Optional SSH known hosts file to use to verify hosts
 * `timeout` - Optional timeout of the SSH connection, session and optional command.
     * The default comes from the `--collector.ssh.default-timeout` flag.
 * `command` - Optional command to run.

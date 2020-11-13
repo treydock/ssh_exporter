@@ -35,6 +35,7 @@ type Module struct {
 	User          string `yaml:"user"`
 	Password      string `yaml:"password"`
 	PrivateKey    string `yaml:"private_key"`
+	KnownHosts    string `yaml:"known_hosts"`
 	Timeout       int    `yaml:"timeout"`
 	Command       string `yaml:"command"`
 	CommandExpect string `yaml:"command_expect"`
@@ -45,6 +46,7 @@ type Target struct {
 	User          string
 	Password      string
 	PrivateKey    string
+	KnownHosts    string
 	Timeout       int
 	Command       string
 	CommandExpect string

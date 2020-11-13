@@ -1,6 +1,7 @@
 ## 0.2.0 / TBD
 
 * Update to 1.15 and update Go module dependencies
+* Add known_hosts configuration option to allow verifying SSH hosts against known hosts
 
 ## 0.1.1 / 2020-04-01
 
