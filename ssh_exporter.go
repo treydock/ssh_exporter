@@ -59,14 +59,15 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 		}
 
 		target := &config.Target{
-			Host:          t,
-			User:          module.User,
-			Password:      module.Password,
-			PrivateKey:    module.PrivateKey,
-			KnownHosts:    module.KnownHosts,
-			Timeout:       module.Timeout,
-			Command:       module.Command,
-			CommandExpect: module.CommandExpect,
+			Host:              t,
+			User:              module.User,
+			Password:          module.Password,
+			PrivateKey:        module.PrivateKey,
+			KnownHosts:        module.KnownHosts,
+			HostKeyAlgorithms: module.HostKeyAlgorithms,
+			Timeout:           module.Timeout,
+			Command:           module.Command,
+			CommandExpect:     module.CommandExpect,
 		}
 		sshCollector := collector.NewCollector(target, log.With(logger, "target", target.Host))
 		registry.MustRegister(sshCollector)

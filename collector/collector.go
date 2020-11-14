@@ -106,10 +106,11 @@ func (c *Collector) collect() Metric {
 	}
 
 	sshConfig := &ssh.ClientConfig{
-		User:            c.target.User,
-		Auth:            []ssh.AuthMethod{auth},
-		HostKeyCallback: hostKeyCallback(&metric, c.target, c.logger),
-		Timeout:         time.Duration(c.target.Timeout) * time.Second,
+		User:              c.target.User,
+		Auth:              []ssh.AuthMethod{auth},
+		HostKeyCallback:   hostKeyCallback(&metric, c.target, c.logger),
+		HostKeyAlgorithms: c.target.HostKeyAlgorithms,
+		Timeout:           time.Duration(c.target.Timeout) * time.Second,
 	}
 	connection, err := ssh.Dial("tcp", c.target.Host, sshConfig)
 	if err != nil {

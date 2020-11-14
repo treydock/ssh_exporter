@@ -37,6 +37,8 @@ modules:
     user: prometheus
     private_key: /home/prometheus/.ssh/id_rsa
     known_hosts: /etc/ssh/ssh_known_hosts
+    host_key_algorithms:
+    - ssh-rsa
     command: uptime
     command_expect: "load average"
     timeout: 5
@@ -55,6 +57,8 @@ Configuration options for each module:
 * `password` - The password for the SSH connection, required if `private_key` is not specified
 * `private_key` - The SSH private key for the SSH connection, required if `password` is not specified
 * `known_hosts` - Optional SSH known hosts file to use to verify hosts
+* `host_key_algorithms` - Optional list of SSH host key algorithms to use
+  * See constants beginning with `KeyAlgo*` in [crypto/ssh](https://godoc.org/golang.org/x/crypto/ssh#pkg-constants)
 * `timeout` - Optional timeout of the SSH connection, session and optional command.
     * The default comes from the `--collector.ssh.default-timeout` flag.
 * `command` - Optional command to run.
