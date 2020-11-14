@@ -35,7 +35,7 @@ const (
 )
 
 type Metric struct {
-	Success       bool
+	Success       float64
 	FailureReason string
 }
 
@@ -73,7 +73,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 
 	metric := c.collect()
 
-	ch <- prometheus.MustNewConstMetric(c.Success, prometheus.GaugeValue, boolToFloat64(metric.Success))
+	ch <- prometheus.MustNewConstMetric(c.Success, prometheus.GaugeValue, metric.Success)
 	for _, reason := range failureReasons {
 		var value float64
 		if reason == metric.FailureReason {
@@ -173,7 +173,7 @@ func (c *Collector) collect() Metric {
 			return metric
 		}
 	}
-	metric.Success = true
+	metric.Success = 1
 	return metric
 }
 
@@ -206,13 +206,5 @@ func hostKeyCallback(metric *Metric, target *config.Target, logger log.Logger) s
 			hostKeyCallback = ssh.InsecureIgnoreHostKey()
 		}
 		return hostKeyCallback(hostname, remote, key)
-	}
-}
-
-func boolToFloat64(data bool) float64 {
-	if data {
-		return float64(1)
-	} else {
-		return float64(0)
 	}
 }
