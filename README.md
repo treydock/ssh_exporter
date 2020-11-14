@@ -118,8 +118,15 @@ The following example assumes this exporter is running on the Prometheus server 
   metrics_path: /ssh
   static_configs:
   - targets:
-    - ssh1.example.com
-    - ssh2.example.com
+    - host1.example.com:22
+    - host2.example.com:22
+    labels:
+      module: default
+  - targets:
+    - host3.example.com:22
+    - host4.example.com:22
+    labels:
+      module: verify
   relabel_configs:
   - source_labels: [__address__]
     target_label: __param_target
@@ -127,6 +134,11 @@ The following example assumes this exporter is running on the Prometheus server 
     target_label: instance
   - target_label: __address__
     replacement: 127.0.0.1:9312
+  - source_labels: [module]
+    target_label: __param_module
+  metric_relabel_configs:
+  - regex: "^(module)$"
+    action: labeldrop
 - job_name: ssh-metrics
   metrics_path: /metrics
   static_configs:
