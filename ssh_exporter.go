@@ -30,6 +30,11 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
+const (
+	sshEndpoint     = "/ssh"
+	metricsEndpoint = "/metrics"
+)
+
 var (
 	configFile     = kingpin.Flag("config.file", "Path to exporter config file").Default("ssh_exporter.yaml").String()
 	defaultTimeout = kingpin.Flag("collector.ssh.default-timeout", "Default timeout for SSH collection").Default("10").Int()
@@ -59,13 +64,15 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 		}
 
 		target := &config.Target{
-			Host:          t,
-			User:          module.User,
-			Password:      module.Password,
-			PrivateKey:    module.PrivateKey,
-			Timeout:       module.Timeout,
-			Command:       module.Command,
-			CommandExpect: module.CommandExpect,
+			Host:              t,
+			User:              module.User,
+			Password:          module.Password,
+			PrivateKey:        module.PrivateKey,
+			KnownHosts:        module.KnownHosts,
+			HostKeyAlgorithms: module.HostKeyAlgorithms,
+			Timeout:           module.Timeout,
+			Command:           module.Command,
+			CommandExpect:     module.CommandExpect,
 		}
 		sshCollector := collector.NewCollector(target, log.With(logger, "target", target.Host))
 		registry.MustRegister(sshCollector)
@@ -79,7 +86,6 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 }
 
 func main() {
-	metricsEndpoint := "/ssh"
 	promlogConfig := &promlog.Config{}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)
 	kingpin.Version(version.Print("ssh_exporter"))
@@ -104,13 +110,13 @@ func main() {
              <head><title>SSH Exporter</title></head>
              <body>
              <h1>SSH Exporter</h1>
-             <p><a href='` + metricsEndpoint + `'>SSH Metrics</a></p>
-             <p><a href='/metrics'>Exporter Metrics</a></p>
+             <p><a href='` + sshEndpoint + `'>SSH Metrics</a></p>
+             <p><a href='` + metricsEndpoint + `'>Exporter Metrics</a></p>
              </body>
              </html>`))
 	})
-	http.Handle(metricsEndpoint, metricsHandler(sc.C, logger))
-	http.Handle("/metrics", promhttp.Handler())
+	http.Handle(sshEndpoint, metricsHandler(sc.C, logger))
+	http.Handle(metricsEndpoint, promhttp.Handler())
 	err := http.ListenAndServe(*listenAddress, nil)
 	if err != nil {
 		level.Error(logger).Log("err", err)

@@ -14,6 +14,8 @@
 package collector
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -26,11 +28,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/treydock/ssh_exporter/config"
+	gossh "golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 const (
 	listen = 60022
 )
+
+var knownHosts *os.File
 
 func publicKeyHandler(ctx ssh.Context, key ssh.PublicKey) bool {
 	buffer, err := ioutil.ReadFile("testdata/id_rsa_test1.pub")
@@ -68,6 +74,27 @@ func TestMain(m *testing.M) {
 		Addr:             fmt.Sprintf(":%d", listen),
 		PublicKeyHandler: publicKeyHandler,
 		PasswordHandler:  passwordHandler,
+	}
+	hostKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		fmt.Printf("ERROR generating RSA host key: %s", err)
+		os.Exit(1)
+	}
+	signer, err := gossh.NewSignerFromKey(hostKey)
+	if err != nil {
+		fmt.Printf("ERROR generating host key signer: %s", err)
+		os.Exit(1)
+	}
+	s.AddHostKey(signer)
+	knownHosts, err = ioutil.TempFile("", "knowm_hosts")
+	if err != nil {
+		fmt.Printf("ERROR creating known hosts: %s", err)
+		os.Exit(1)
+	}
+	defer os.Remove(knownHosts.Name())
+	knownHostsLine := knownhosts.Line([]string{fmt.Sprintf("localhost:%d", listen)}, s.HostSigners[0].PublicKey())
+	if _, err = knownHosts.Write([]byte(knownHostsLine)); err != nil {
+		fmt.Printf("ERROR writing known hosts: %s", err)
 	}
 	go func() {
 		if err := s.ListenAndServe(); err != nil {
@@ -262,6 +289,108 @@ func TestCollectorPrivateKey(t *testing.T) {
 		Host:       fmt.Sprintf("localhost:%d", listen),
 		User:       "test",
 		PrivateKey: "testdata/id_rsa_test1",
+		Timeout:    2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	gatherers := setupGatherer(collector)
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 6 {
+		t.Errorf("Unexpected collection count %d, expected 6", val)
+	}
+	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
+		"ssh_success", "ssh_failure"); err != nil {
+		t.Errorf("unexpected collecting result:\n%s", err)
+	}
+}
+
+func TestCollectorKnownHosts(t *testing.T) {
+	expected := `
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 0
+	ssh_failure{reason="error"} 0
+	ssh_failure{reason="timeout"} 0
+	# HELP ssh_success SSH connection was successful
+	# TYPE ssh_success gauge
+	ssh_success 1
+	`
+	target := &config.Target{
+		Host:       fmt.Sprintf("localhost:%d", listen),
+		User:       "test",
+		PrivateKey: "testdata/id_rsa_test1",
+		KnownHosts: knownHosts.Name(),
+		Timeout:    2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	gatherers := setupGatherer(collector)
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 6 {
+		t.Errorf("Unexpected collection count %d, expected 6", val)
+	}
+	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
+		"ssh_success", "ssh_failure"); err != nil {
+		t.Errorf("unexpected collecting result:\n%s", err)
+	}
+}
+
+func TestCollectorKnownHostsError(t *testing.T) {
+	expected := `
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 0
+	ssh_failure{reason="error"} 1
+	ssh_failure{reason="timeout"} 0
+	# HELP ssh_success SSH connection was successful
+	# TYPE ssh_success gauge
+	ssh_success 0
+	`
+	target := &config.Target{
+		Host:       fmt.Sprintf("127.0.0.1:%d", listen),
+		User:       "test",
+		PrivateKey: "testdata/id_rsa_test1",
+		KnownHosts: knownHosts.Name(),
+		Timeout:    2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	gatherers := setupGatherer(collector)
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 6 {
+		t.Errorf("Unexpected collection count %d, expected 6", val)
+	}
+	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
+		"ssh_success", "ssh_failure"); err != nil {
+		t.Errorf("unexpected collecting result:\n%s", err)
+	}
+}
+
+func TestCollectorKnownHostsDNE(t *testing.T) {
+	expected := `
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 0
+	ssh_failure{reason="error"} 1
+	ssh_failure{reason="timeout"} 0
+	# HELP ssh_success SSH connection was successful
+	# TYPE ssh_success gauge
+	ssh_success 0
+	`
+	target := &config.Target{
+		Host:       fmt.Sprintf("localhost:%d", listen),
+		User:       "test",
+		PrivateKey: "testdata/id_rsa_test1",
+		KnownHosts: "/dne",
 		Timeout:    2,
 	}
 	w := log.NewSyncWriter(os.Stderr)

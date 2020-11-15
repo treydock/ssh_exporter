@@ -31,23 +31,27 @@ type SafeConfig struct {
 }
 
 type Module struct {
-	ModuleName    string
-	User          string `yaml:"user"`
-	Password      string `yaml:"password"`
-	PrivateKey    string `yaml:"private_key"`
-	Timeout       int    `yaml:"timeout"`
-	Command       string `yaml:"command"`
-	CommandExpect string `yaml:"command_expect"`
+	ModuleName        string
+	User              string   `yaml:"user"`
+	Password          string   `yaml:"password"`
+	PrivateKey        string   `yaml:"private_key"`
+	KnownHosts        string   `yaml:"known_hosts"`
+	HostKeyAlgorithms []string `yaml:"host_key_algorithms"`
+	Timeout           int      `yaml:"timeout"`
+	Command           string   `yaml:"command"`
+	CommandExpect     string   `yaml:"command_expect"`
 }
 
 type Target struct {
-	Host          string
-	User          string
-	Password      string
-	PrivateKey    string
-	Timeout       int
-	Command       string
-	CommandExpect string
+	Host              string
+	User              string
+	Password          string
+	PrivateKey        string
+	KnownHosts        string
+	HostKeyAlgorithms []string
+	Timeout           int
+	Command           string
+	CommandExpect     string
 }
 
 func (sc *SafeConfig) ReloadConfig(configFile string) error {

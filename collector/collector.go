@@ -15,7 +15,9 @@ package collector
 
 import (
 	"bytes"
+	"encoding/base64"
 	"io/ioutil"
+	"net"
 	"regexp"
 	"strings"
 	"time"
@@ -25,6 +27,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/treydock/ssh_exporter/config"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 const (
@@ -32,7 +35,7 @@ const (
 )
 
 type Metric struct {
-	Success       bool
+	Success       float64
 	FailureReason string
 }
 
@@ -70,7 +73,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 
 	metric := c.collect()
 
-	ch <- prometheus.MustNewConstMetric(c.Success, prometheus.GaugeValue, boolToFloat64(metric.Success))
+	ch <- prometheus.MustNewConstMetric(c.Success, prometheus.GaugeValue, metric.Success)
 	for _, reason := range failureReasons {
 		var value float64
 		if reason == metric.FailureReason {
@@ -103,10 +106,11 @@ func (c *Collector) collect() Metric {
 	}
 
 	sshConfig := &ssh.ClientConfig{
-		User:            c.target.User,
-		Auth:            []ssh.AuthMethod{auth},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         time.Duration(c.target.Timeout) * time.Second,
+		User:              c.target.User,
+		Auth:              []ssh.AuthMethod{auth},
+		HostKeyCallback:   hostKeyCallback(&metric, c.target, c.logger),
+		HostKeyAlgorithms: c.target.HostKeyAlgorithms,
+		Timeout:           time.Duration(c.target.Timeout) * time.Second,
 	}
 	connection, err := ssh.Dial("tcp", c.target.Host, sshConfig)
 	if err != nil {
@@ -170,7 +174,7 @@ func (c *Collector) collect() Metric {
 			return metric
 		}
 	}
-	metric.Success = true
+	metric.Success = 1
 	return metric
 }
 
@@ -186,10 +190,22 @@ func getPrivateKeyAuth(privatekey string) (ssh.AuthMethod, error) {
 	return ssh.PublicKeys(key), nil
 }
 
-func boolToFloat64(data bool) float64 {
-	if data {
-		return float64(1)
-	} else {
-		return float64(0)
+func hostKeyCallback(metric *Metric, target *config.Target, logger log.Logger) ssh.HostKeyCallback {
+	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+		var hostKeyCallback ssh.HostKeyCallback
+		var err error
+		if target.KnownHosts != "" {
+			publicKey := base64.StdEncoding.EncodeToString(key.Marshal())
+			level.Debug(logger).Log("msg", "Verify SSH known hosts", "hostname", hostname, "remote", remote.String(), "key", publicKey)
+			hostKeyCallback, err = knownhosts.New(target.KnownHosts)
+			if err != nil {
+				metric.FailureReason = "error"
+				level.Error(logger).Log("msg", "Error creating hostkeycallback function", "err", err)
+				return err
+			}
+		} else {
+			hostKeyCallback = ssh.InsecureIgnoreHostKey()
+		}
+		return hostKeyCallback(hostname, remote, key)
 	}
 }
