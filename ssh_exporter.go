@@ -36,9 +36,8 @@ const (
 )
 
 var (
-	configFile     = kingpin.Flag("config.file", "Path to exporter config file").Default("ssh_exporter.yaml").String()
-	defaultTimeout = kingpin.Flag("collector.ssh.default-timeout", "Default timeout for SSH collection").Default("10").Int()
-	listenAddress  = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9312").String()
+	configFile    = kingpin.Flag("config.file", "Path to exporter config file").Default("ssh_exporter.yaml").String()
+	listenAddress = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9312").String()
 )
 
 func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
@@ -58,9 +57,6 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 		if !ok {
 			http.Error(w, fmt.Sprintf("Unknown module %s", t), http.StatusNotFound)
 			return
-		}
-		if module.Timeout == 0 {
-			module.Timeout = *defaultTimeout
 		}
 
 		target := &config.Target{
@@ -85,14 +81,7 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 	}
 }
 
-func main() {
-	promlogConfig := &promlog.Config{}
-	flag.AddFlags(kingpin.CommandLine, promlogConfig)
-	kingpin.Version(version.Print("ssh_exporter"))
-	kingpin.HelpFlag.Short('h')
-	kingpin.Parse()
-
-	logger := promlog.New(promlogConfig)
+func run(logger log.Logger) {
 	level.Info(logger).Log("msg", "Starting ssh_exporter", "version", version.Info())
 	level.Info(logger).Log("msg", "Build context", "build_context", version.BuildContext())
 	level.Info(logger).Log("msg", "Starting Server", "address", *listenAddress)
@@ -122,4 +111,16 @@ func main() {
 		level.Error(logger).Log("err", err)
 		os.Exit(1)
 	}
+}
+
+func main() {
+	promlogConfig := &promlog.Config{}
+	flag.AddFlags(kingpin.CommandLine, promlogConfig)
+	kingpin.Version(version.Print("ssh_exporter"))
+	kingpin.HelpFlag.Short('h')
+	kingpin.Parse()
+
+	logger := promlog.New(promlogConfig)
+
+	run(logger)
 }

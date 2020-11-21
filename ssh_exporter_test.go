@@ -26,6 +26,8 @@ import (
 	"github.com/gliderlabs/ssh"
 	"github.com/go-kit/kit/log"
 	"github.com/treydock/ssh_exporter/config"
+	"gopkg.in/alecthomas/kingpin.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 const (
@@ -34,6 +36,16 @@ const (
 )
 
 func TestMain(m *testing.M) {
+	tmp, err := ioutil.TempFile("", "ssh_exporter")
+	if err != nil {
+		fmt.Printf("ERROR writing temp file: %s", err)
+		os.Exit(1)
+	}
+	defer os.Remove(tmp.Name())
+	if _, err := kingpin.CommandLine.Parse([]string{"--config.file", tmp.Name(), "--web.listen-address", address}); err != nil {
+		fmt.Printf("ERROR parsing arguments %s", err)
+		os.Exit(1)
+	}
 	ssh.Handle(func(s ssh.Session) {
 		_, _ = io.WriteString(s, "foobar\n")
 	})
@@ -46,21 +58,23 @@ func TestMain(m *testing.M) {
 	}()
 
 	module := &config.Module{
-		User:     "test",
-		Password: "test",
-		Timeout:  2,
+		User:              "test",
+		Password:          "test",
+		HostKeyAlgorithms: []string{"ssh-rsa"},
+		Timeout:           2,
 	}
 	c := &config.Config{}
 	c.Modules = make(map[string]*config.Module)
 	c.Modules["default"] = module
+	d, _ := yaml.Marshal(&c)
+	if _, err = tmp.Write(d); err != nil {
+		fmt.Printf("ERROR writing tmp file: %s", err)
+		os.Exit(1)
+	}
 	w := log.NewSyncWriter(os.Stderr)
 	logger := log.NewLogfmtLogger(w)
 	go func() {
-		http.Handle("/ssh", metricsHandler(c, logger))
-		err := http.ListenAndServe(address, nil)
-		if err != nil {
-			os.Exit(1)
-		}
+		run(logger)
 	}()
 	time.Sleep(1 * time.Second)
 

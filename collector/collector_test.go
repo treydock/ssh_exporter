@@ -67,7 +67,7 @@ func passwordHandler(ctx ssh.Context, password string) bool {
 
 func TestMain(m *testing.M) {
 	ssh.Handle(func(s ssh.Session) {
-		_, _ = io.WriteString(s, "foobar\n")
+		_, _ = io.WriteString(s, "11:42:20 up 57 days, 19:18,  5 users,  load average: 2.48, 1.10, 0.49\n")
 	})
 
 	s := &ssh.Server{
@@ -157,11 +157,13 @@ func TestCollectorCommand(t *testing.T) {
 		Host:          fmt.Sprintf("localhost:%d", listen),
 		User:          "test",
 		Password:      "test",
-		Command:       "echo 0",
-		CommandExpect: "foo",
+		Command:       "uptime",
+		CommandExpect: "load average",
 		Timeout:       2,
 	}
-	collector := NewCollector(target, log.NewNopLogger())
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -190,8 +192,8 @@ func TestCollectorCommandOutputError(t *testing.T) {
 		Host:          fmt.Sprintf("localhost:%d", listen),
 		User:          "test",
 		Password:      "test",
-		Command:       "echo 0",
-		CommandExpect: "test",
+		Command:       "uptime",
+		CommandExpect: "foobar",
 		Timeout:       2,
 	}
 	collector := NewCollector(target, log.NewNopLogger())
@@ -207,7 +209,7 @@ func TestCollectorCommandOutputError(t *testing.T) {
 	}
 }
 
-func TestCollectorTimeout(t *testing.T) {
+func TestCollectorTimeoutDial(t *testing.T) {
 	expected := `
 	# HELP ssh_failure Indicates a failure
 	# TYPE ssh_failure gauge
@@ -224,6 +226,40 @@ func TestCollectorTimeout(t *testing.T) {
 		User:     "test",
 		Password: "test",
 		Timeout:  -2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	gatherers := setupGatherer(collector)
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 6 {
+		t.Errorf("Unexpected collection count %d, expected 6", val)
+	}
+	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
+		"ssh_success", "ssh_failure"); err != nil {
+		t.Errorf("unexpected collecting result:\n%s", err)
+	}
+}
+
+func TestCollectorTimeoutCommand(t *testing.T) {
+	expected := `
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 0
+	ssh_failure{reason="error"} 0
+	ssh_failure{reason="timeout"} 1
+	# HELP ssh_success SSH connection was successful
+	# TYPE ssh_success gauge
+	ssh_success 0
+	`
+	target := &config.Target{
+		Host:     fmt.Sprintf("localhost:%d", listen),
+		User:     "test",
+		Password: "test",
+		Command:  "sleep 1",
+		Timeout:  0,
 	}
 	w := log.NewSyncWriter(os.Stderr)
 	logger := log.NewLogfmtLogger(w)
