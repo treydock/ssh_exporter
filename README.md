@@ -72,6 +72,16 @@ Example of running the Docker container
 docker run -d -p 9312:9312 -v "ssh_exporter.yaml:/ssh_exporter.yaml:ro" treydock/ssh_exporter
 ```
 
+Example of running the Docker container and making SSH private key available.
+This requires setting `private_key` value to `/.ssh/id_rsa`.
+
+```
+docker run -d -p 9312:9312 \
+-v "ssh_exporter.yaml:/ssh_exporter.yaml:ro" \
+-v "/home/prometheus/.ssh/id_rsa:/.ssh/id_rsa:ro" \
+treydock/ssh_exporter
+```
+
 ## Install
 
 Download the [latest release](https://github.com/treydock/ssh_exporter/releases)

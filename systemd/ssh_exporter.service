@@ -1,12 +1,12 @@
 [Unit]
-Description=Prometheus ssh_exporter
+Description=Prometheus SSH Exporter
 Wants=basic.target
 After=basic.target network.target
 
 [Service]
 User=ssh_exporter
 Group=ssh_exporter
-ExecStart=/usr/local/bin/ssh_exporter --config.file=/etc/ssh_exporterssh_exporter.yaml
+ExecStart=/usr/local/bin/ssh_exporter --config.file=/etc/ssh_exporter.yaml --web.listen-address=:9312
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 Restart=always
