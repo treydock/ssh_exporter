@@ -85,14 +85,7 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 	}
 }
 
-func main() {
-	promlogConfig := &promlog.Config{}
-	flag.AddFlags(kingpin.CommandLine, promlogConfig)
-	kingpin.Version(version.Print("ssh_exporter"))
-	kingpin.HelpFlag.Short('h')
-	kingpin.Parse()
-
-	logger := promlog.New(promlogConfig)
+func run(logger log.Logger) {
 	level.Info(logger).Log("msg", "Starting ssh_exporter", "version", version.Info())
 	level.Info(logger).Log("msg", "Build context", "build_context", version.BuildContext())
 	level.Info(logger).Log("msg", "Starting Server", "address", *listenAddress)
@@ -122,4 +115,16 @@ func main() {
 		level.Error(logger).Log("err", err)
 		os.Exit(1)
 	}
+}
+
+func main() {
+	promlogConfig := &promlog.Config{}
+	flag.AddFlags(kingpin.CommandLine, promlogConfig)
+	kingpin.Version(version.Print("ssh_exporter"))
+	kingpin.HelpFlag.Short('h')
+	kingpin.Parse()
+
+	logger := promlog.New(promlogConfig)
+
+	run(logger)
 }

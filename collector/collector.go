@@ -78,8 +78,6 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 		var value float64
 		if reason == metric.FailureReason {
 			value = 1
-		} else {
-			value = 0
 		}
 		ch <- prometheus.MustNewConstMetric(c.Failure, prometheus.GaugeValue, value, reason)
 	}
