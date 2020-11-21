@@ -15,9 +15,15 @@ package config
 
 import (
 	"testing"
+
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func TestReloadConfigDefaults(t *testing.T) {
+	if _, err := kingpin.CommandLine.Parse([]string{}); err != nil {
+		t.Errorf("ERROR parsing arguments %s", err)
+		return
+	}
 	sc := &SafeConfig{}
 	err := sc.ReloadConfig("testdata/ssh_exporter.yaml")
 	if err != nil {
@@ -31,6 +37,9 @@ func TestReloadConfigDefaults(t *testing.T) {
 	}
 	if module.User != "prometheus" {
 		t.Errorf("Module User does not match prometheus")
+	}
+	if module.Timeout != 10 {
+		t.Errorf("Module Timeout does not match default 10")
 	}
 }
 

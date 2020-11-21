@@ -18,7 +18,12 @@ import (
 	"os"
 	"sync"
 
+	"gopkg.in/alecthomas/kingpin.v2"
 	yaml "gopkg.in/yaml.v3"
+)
+
+var (
+	defaultTimeout = kingpin.Flag("collector.ssh.default-timeout", "Default timeout for SSH collection").Default("10").Int()
 )
 
 type Config struct {
@@ -74,6 +79,9 @@ func (sc *SafeConfig) ReloadConfig(configFile string) error {
 		}
 		if module.Password == "" && module.PrivateKey == "" {
 			return fmt.Errorf("Module %s must define 'password' or 'private_key' value", key)
+		}
+		if module.Timeout == 0 {
+			module.Timeout = *defaultTimeout
 		}
 		c.Modules[key] = module
 	}

@@ -36,9 +36,8 @@ const (
 )
 
 var (
-	configFile     = kingpin.Flag("config.file", "Path to exporter config file").Default("ssh_exporter.yaml").String()
-	defaultTimeout = kingpin.Flag("collector.ssh.default-timeout", "Default timeout for SSH collection").Default("10").Int()
-	listenAddress  = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9312").String()
+	configFile    = kingpin.Flag("config.file", "Path to exporter config file").Default("ssh_exporter.yaml").String()
+	listenAddress = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9312").String()
 )
 
 func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
@@ -58,9 +57,6 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 		if !ok {
 			http.Error(w, fmt.Sprintf("Unknown module %s", t), http.StatusNotFound)
 			return
-		}
-		if module.Timeout == 0 {
-			module.Timeout = *defaultTimeout
 		}
 
 		target := &config.Target{
