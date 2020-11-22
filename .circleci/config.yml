@@ -53,6 +53,11 @@ jobs:
         organization: treydock
         password_variable: DOCKER_PASSWORD
         registry: docker.io
+    - prometheus/publish_images:
+        login_variable: QUAY_LOGIN
+        organization: treydock
+        password_variable: QUAY_PASSWORD
+        registry: quay.io
   publish_release:
     executor: golang
     steps:
@@ -68,6 +73,11 @@ jobs:
         organization: treydock
         password_variable: DOCKER_PASSWORD
         registry: docker.io
+    - prometheus/publish_release_images:
+        login_variable: QUAY_LOGIN
+        organization: treydock
+        password_variable: QUAY_PASSWORD
+        registry: quay.io
 workflows:
   version: 2
   ssh_exporter:
