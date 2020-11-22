@@ -23,27 +23,6 @@ jobs:
         file: coverage.txt
     - prometheus/store_artifact:
         file: ssh_exporter
-  build:
-    machine:
-      image: ubuntu-1604:201903-01
-    steps:
-    - checkout
-    - run: make promu
-    - run: promu crossbuild -v
-    - persist_to_workspace:
-        root: .
-        paths:
-        - .build
-    - store_artifacts:
-        path: .build
-        destination: /build
-    - run: 
-        command: |
-          if [ -n "$CIRCLE_TAG" ]; then
-            make docker DOCKER_IMAGE_TAG=$CIRCLE_TAG
-          else
-            make docker
-          fi
 workflows:
   version: 2
   ssh_exporter:
@@ -52,7 +31,8 @@ workflows:
         filters:
           tags:
             only: /.*/
-    - build:
+    - prometheus/build:
+        name: build
         filters:
           tags:
             only: /.*/
