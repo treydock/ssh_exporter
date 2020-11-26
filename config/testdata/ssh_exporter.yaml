@@ -1,4 +1,7 @@
 modules:
   default:
     user: prometheus
+    password: password
+  key:
+    user: prometheus
     private_key: /home/prometheus/.ssh/id_rsa
