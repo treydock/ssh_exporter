@@ -42,6 +42,12 @@ modules:
     command: uptime
     command_expect: "load average"
     timeout: 5
+  capture:
+    user: prometheus
+    private_key: /home/prometheus/.ssh/id_rsa
+    command: /some/command/with/output
+    output_metric: true
+    output_truncate: 50
 ```
 
 Example with curl would query host1 with the password module and host2 with the default module.
@@ -63,6 +69,8 @@ Configuration options for each module:
     * The default comes from the `--collector.ssh.default-timeout` flag.
 * `command` - Optional command to run.
 * `command_expect` - Optional regular expression of output to expect from the command.
+* `output_metric` - If `true` the exporter will expose the `command` output via `ssh_output{output="<output here>"}` metric.
+* `output_truncate` - Sets the max length for a string in `ssh_output` metric's `output` label. Set to `-1` to disable truncating.
 
 ## Docker
 

@@ -136,7 +136,7 @@ func TestCollector(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_success", "ssh_failure"); err != nil {
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
@@ -171,7 +171,87 @@ func TestCollectorCommand(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_success", "ssh_failure"); err != nil {
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
+		t.Errorf("unexpected collecting result:\n%s", err)
+	}
+}
+
+func TestCollectorCommandOutputMetric(t *testing.T) {
+	expected := `
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 0
+	ssh_failure{reason="error"} 0
+	ssh_failure{reason="timeout"} 0
+	# HELP ssh_output The output of the executed command
+	# TYPE ssh_output gauge
+	ssh_output{output="11:42:20 up 57 days, 19:18,  5 users,  load ave..."} 1
+	# HELP ssh_success SSH connection was successful
+	# TYPE ssh_success gauge
+	ssh_success 1
+	`
+	target := &config.Target{
+		Host:           fmt.Sprintf("localhost:%d", listen),
+		User:           "test",
+		Password:       "test",
+		Command:        "uptime",
+		CommandExpect:  "load average",
+		OutputMetric:   true,
+		OutputTruncate: 50,
+		Timeout:        2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	gatherers := setupGatherer(collector)
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 7 {
+		t.Errorf("Unexpected collection count %d, expected 7", val)
+	}
+	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
+		t.Errorf("unexpected collecting result:\n%s", err)
+	}
+}
+
+func TestCollectorCommandOutputMetricNoTruncate(t *testing.T) {
+	expected := `
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 0
+	ssh_failure{reason="error"} 0
+	ssh_failure{reason="timeout"} 0
+	# HELP ssh_output The output of the executed command
+	# TYPE ssh_output gauge
+	ssh_output{output="11:42:20 up 57 days, 19:18,  5 users,  load average: 2.48, 1.10, 0.49"} 1
+	# HELP ssh_success SSH connection was successful
+	# TYPE ssh_success gauge
+	ssh_success 1
+	`
+	target := &config.Target{
+		Host:           fmt.Sprintf("localhost:%d", listen),
+		User:           "test",
+		Password:       "test",
+		Command:        "uptime",
+		CommandExpect:  "load average",
+		OutputMetric:   true,
+		OutputTruncate: -1,
+		Timeout:        2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	gatherers := setupGatherer(collector)
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 7 {
+		t.Errorf("Unexpected collection count %d, expected 7", val)
+	}
+	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
@@ -204,7 +284,7 @@ func TestCollectorCommandOutputError(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_success", "ssh_failure"); err != nil {
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
@@ -237,7 +317,7 @@ func TestCollectorTimeoutDial(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_success", "ssh_failure"); err != nil {
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
@@ -271,7 +351,7 @@ func TestCollectorTimeoutCommand(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_success", "ssh_failure"); err != nil {
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
@@ -304,7 +384,7 @@ func TestCollectorError(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_success", "ssh_failure"); err != nil {
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
@@ -337,7 +417,7 @@ func TestCollectorPrivateKey(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_success", "ssh_failure"); err != nil {
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
@@ -371,7 +451,7 @@ func TestCollectorKnownHosts(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_success", "ssh_failure"); err != nil {
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
@@ -405,7 +485,7 @@ func TestCollectorKnownHostsError(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_success", "ssh_failure"); err != nil {
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
@@ -439,7 +519,7 @@ func TestCollectorKnownHostsDNE(t *testing.T) {
 		t.Errorf("Unexpected collection count %d, expected 6", val)
 	}
 	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
-		"ssh_success", "ssh_failure"); err != nil {
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
 		t.Errorf("unexpected collecting result:\n%s", err)
 	}
 }
