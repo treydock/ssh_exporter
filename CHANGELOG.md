@@ -1,4 +1,4 @@
-## Unreleased
+## 1.1.0-rc.0 / 2020-12-15
 
 ### Changes
 
