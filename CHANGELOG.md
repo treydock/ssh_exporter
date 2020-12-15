@@ -1,3 +1,9 @@
+## Unreleased
+
+### Changes
+
+* [ENHANCEMENT] Add opt-in `ssh_output` metric
+
 ## 1.0.0 / 2020-11-22
 
 * Update to 1.15 and update Go module dependencies

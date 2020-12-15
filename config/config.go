@@ -23,7 +23,9 @@ import (
 )
 
 var (
-	defaultTimeout = kingpin.Flag("collector.ssh.default-timeout", "Default timeout for SSH collection").Default("10").Int()
+	defaultTimeout        = kingpin.Flag("collector.ssh.default-timeout", "Default timeout for SSH collection").Default("10").Int()
+	defaultOutputTruncate = kingpin.Flag("collector.ssh.default-output-truncate",
+		"Default output truncate length when output metric is enabled").Default("50").Int()
 )
 
 type Config struct {
@@ -45,6 +47,8 @@ type Module struct {
 	Timeout           int      `yaml:"timeout"`
 	Command           string   `yaml:"command"`
 	CommandExpect     string   `yaml:"command_expect"`
+	OutputMetric      bool     `yaml:"output_metric"`
+	OutputTruncate    int      `yaml:"output_truncate"`
 }
 
 type Target struct {
@@ -57,6 +61,8 @@ type Target struct {
 	Timeout           int
 	Command           string
 	CommandExpect     string
+	OutputMetric      bool
+	OutputTruncate    int
 }
 
 func (sc *SafeConfig) ReloadConfig(configFile string) error {
@@ -82,6 +88,9 @@ func (sc *SafeConfig) ReloadConfig(configFile string) error {
 		}
 		if module.Timeout == 0 {
 			module.Timeout = *defaultTimeout
+		}
+		if module.OutputTruncate == 0 {
+			module.OutputTruncate = *defaultOutputTruncate
 		}
 		c.Modules[key] = module
 	}

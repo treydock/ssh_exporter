@@ -37,12 +37,14 @@ const (
 type Metric struct {
 	Success       float64
 	FailureReason string
+	Output        string
 }
 
 type Collector struct {
 	Success  *prometheus.Desc
 	Duration *prometheus.Desc
 	Failure  *prometheus.Desc
+	Output   *prometheus.Desc
 	target   *config.Target
 	logger   log.Logger
 }
@@ -55,6 +57,8 @@ func NewCollector(target *config.Target, logger log.Logger) *Collector {
 			"How long the SSH check took in seconds", nil, nil),
 		Failure: prometheus.NewDesc(prometheus.BuildFQName(namespace, "", "failure"),
 			"Indicates a failure", []string{"reason"}, nil),
+		Output: prometheus.NewDesc(prometheus.BuildFQName(namespace, "", "output"),
+			"The output of the executed command", []string{"output"}, nil),
 		target: target,
 		logger: logger,
 	}
@@ -64,6 +68,7 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.Success
 	ch <- c.Duration
 	ch <- c.Failure
+	ch <- c.Output
 }
 
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
@@ -81,6 +86,10 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 		}
 		ch <- prometheus.MustNewConstMetric(c.Failure, prometheus.GaugeValue, value, reason)
 	}
+	if c.target.OutputMetric {
+		output := truncateString(metric.Output, c.target.OutputTruncate)
+		ch <- prometheus.MustNewConstMetric(c.Output, prometheus.GaugeValue, 1, strings.TrimSuffix(output, "\n"))
+	}
 	ch <- prometheus.MustNewConstMetric(c.Duration, prometheus.GaugeValue, time.Since(collectTime).Seconds())
 }
 
@@ -90,7 +99,6 @@ func (c *Collector) collect() Metric {
 	var metric Metric
 	var auth ssh.AuthMethod
 	var sessionerror, autherror, commanderror error
-	var commandOutput string
 
 	if c.target.PrivateKey != "" {
 		auth, autherror = getPrivateKeyAuth(c.target.PrivateKey)
@@ -136,7 +144,7 @@ func (c *Collector) collect() Metric {
 			if commanderror != nil {
 				return
 			}
-			commandOutput = cmdBuffer.String()
+			metric.Output = cmdBuffer.String()
 		}
 		if !timeout {
 			c1 <- 1
@@ -165,9 +173,9 @@ func (c *Collector) collect() Metric {
 	}
 	if c.target.Command != "" && c.target.CommandExpect != "" {
 		commandExpectPattern := regexp.MustCompile(c.target.CommandExpect)
-		if !commandExpectPattern.MatchString(commandOutput) {
+		if !commandExpectPattern.MatchString(metric.Output) {
 			level.Error(c.logger).Log("msg", "Command output did not match expected value",
-				"output", commandOutput, "command", c.target.Command)
+				"output", metric.Output, "command", c.target.Command)
 			metric.FailureReason = "command-output"
 			return metric
 		}
@@ -206,4 +214,18 @@ func hostKeyCallback(metric *Metric, target *config.Target, logger log.Logger) s
 		}
 		return hostKeyCallback(hostname, remote, key)
 	}
+}
+
+func truncateString(str string, num int) string {
+	bnoden := str
+	if num == -1 {
+		return bnoden
+	}
+	if len(str) > num {
+		if num > 3 {
+			num -= 3
+		}
+		bnoden = str[0:num] + "..."
+	}
+	return bnoden
 }

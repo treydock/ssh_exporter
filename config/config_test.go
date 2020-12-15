@@ -41,6 +41,9 @@ func TestReloadConfigDefaults(t *testing.T) {
 	if module.Timeout != 10 {
 		t.Errorf("Module Timeout does not match default 10")
 	}
+	if module.OutputTruncate != 50 {
+		t.Errorf("Module OutputTruncate does not match default 50")
+	}
 }
 
 func TestReloadConfigBadConfigs(t *testing.T) {
