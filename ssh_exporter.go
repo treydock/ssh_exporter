@@ -58,6 +58,7 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 			http.Error(w, fmt.Sprintf("Unknown module %s", t), http.StatusNotFound)
 			return
 		}
+		level.Debug(logger).Log("msg", "Loaded module", "module", module.ModuleName)
 
 		target := &config.Target{
 			Host:              t,
@@ -69,6 +70,8 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 			Timeout:           module.Timeout,
 			Command:           module.Command,
 			CommandExpect:     module.CommandExpect,
+			OutputMetric:      module.OutputMetric,
+			OutputTruncate:    module.OutputTruncate,
 		}
 		sshCollector := collector.NewCollector(target, log.With(logger, "target", target.Host))
 		registry.MustRegister(sshCollector)
