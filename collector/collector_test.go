@@ -18,7 +18,6 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -39,7 +38,7 @@ const (
 var knownHosts *os.File
 
 func publicKeyHandler(ctx ssh.Context, key ssh.PublicKey) bool {
-	buffer, err := ioutil.ReadFile("testdata/id_rsa_test1.pub")
+	buffer, err := os.ReadFile("testdata/id_rsa_test1.pub")
 	if err != nil {
 		fmt.Printf("ERROR reading public key testdata/id_rsa_test1.pub: %s", err)
 		os.Exit(1)
@@ -86,7 +85,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	s.AddHostKey(signer)
-	knownHosts, err = ioutil.TempFile("", "knowm_hosts")
+	knownHosts, err = os.CreateTemp("", "knowm_hosts")
 	if err != nil {
 		fmt.Printf("ERROR creating known hosts: %s", err)
 		os.Exit(1)
