@@ -16,8 +16,8 @@ package collector
 import (
 	"bytes"
 	"encoding/base64"
-	"io/ioutil"
 	"net"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -185,7 +185,7 @@ func (c *Collector) collect() Metric {
 }
 
 func getPrivateKeyAuth(privatekey string) (ssh.AuthMethod, error) {
-	buffer, err := ioutil.ReadFile(privatekey)
+	buffer, err := os.ReadFile(privatekey)
 	if err != nil {
 		return nil, err
 	}

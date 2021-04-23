@@ -1,6 +1,6 @@
 module github.com/treydock/ssh_exporter
 
-go 1.15
+go 1.16
 
 require (
 	github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239 // indirect
