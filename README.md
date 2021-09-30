@@ -53,7 +53,7 @@ modules:
 Example with curl would query host1 with the password module and host2 with the default module.
 
 ```
-curl http://localhost:9312/ssh?target=host1.example.com:22&module=password
+curl "http://localhost:9312/ssh?target=host1.example.com:22&module=password"
 curl http://localhost:9312/ssh?target=host2.example.com:22
 ```
 
