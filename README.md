@@ -33,6 +33,10 @@ modules:
   password:
     user: prometheus
     password: secret
+  certificate:
+    user: prometheus
+    private_key: /home/prometheus/.ssh/id_ed25519
+    certificate: /home/prometheus/.ssh/id_ed25519-cert.pub
   verify:
     user: prometheus
     private_key: /home/prometheus/.ssh/id_rsa
@@ -62,6 +66,7 @@ Configuration options for each module:
 * `user` - The username for the SSH connection
 * `password` - The password for the SSH connection, required if `private_key` is not specified
 * `private_key` - The SSH private key for the SSH connection, required if `password` is not specified
+* `certificate` - The SSH certificate for the private key for the SSH connection
 * `known_hosts` - Optional SSH known hosts file to use to verify hosts
 * `host_key_algorithms` - Optional list of SSH host key algorithms to use
   * See constants beginning with `KeyAlgo*` in [crypto/ssh](https://godoc.org/golang.org/x/crypto/ssh#pkg-constants)
