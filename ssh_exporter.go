@@ -65,6 +65,7 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 			User:              module.User,
 			Password:          module.Password,
 			PrivateKey:        module.PrivateKey,
+			Certificate:       module.Certificate,
 			KnownHosts:        module.KnownHosts,
 			HostKeyAlgorithms: module.HostKeyAlgorithms,
 			Timeout:           module.Timeout,

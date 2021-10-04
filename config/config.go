@@ -42,6 +42,7 @@ type Module struct {
 	User              string   `yaml:"user"`
 	Password          string   `yaml:"password"`
 	PrivateKey        string   `yaml:"private_key"`
+	Certificate       string   `yaml:"certificate"`
 	KnownHosts        string   `yaml:"known_hosts"`
 	HostKeyAlgorithms []string `yaml:"host_key_algorithms"`
 	Timeout           int      `yaml:"timeout"`
@@ -56,6 +57,7 @@ type Target struct {
 	User              string
 	Password          string
 	PrivateKey        string
+	Certificate       string
 	KnownHosts        string
 	HostKeyAlgorithms []string
 	Timeout           int
@@ -85,6 +87,9 @@ func (sc *SafeConfig) ReloadConfig(configFile string) error {
 		}
 		if module.Password == "" && module.PrivateKey == "" {
 			return fmt.Errorf("Module %s must define 'password' or 'private_key' value", key)
+		}
+		if module.Certificate != "" && module.PrivateKey == "" {
+			return fmt.Errorf("Module %s must define 'private_key' if it defines a 'certificate' value", key)
 		}
 		if module.Timeout == 0 {
 			module.Timeout = *defaultTimeout

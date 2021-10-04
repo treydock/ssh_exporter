@@ -16,6 +16,7 @@ package collector
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"net"
 	"os"
 	"regexp"
@@ -100,7 +101,14 @@ func (c *Collector) collect() Metric {
 	var auth ssh.AuthMethod
 	var sessionerror, autherror, commanderror error
 
-	if c.target.PrivateKey != "" {
+	if c.target.Certificate != "" {
+		auth, autherror = getCertificateAuth(c.target.PrivateKey, c.target.Certificate)
+		if autherror != nil {
+			metric.FailureReason = "error"
+			level.Error(c.logger).Log("msg", "Error setting up certificate auth", "err", autherror)
+			return metric
+		}
+	} else if c.target.PrivateKey != "" {
 		auth, autherror = getPrivateKeyAuth(c.target.PrivateKey)
 		if autherror != nil {
 			metric.FailureReason = "error"
@@ -194,6 +202,37 @@ func getPrivateKeyAuth(privatekey string) (ssh.AuthMethod, error) {
 		return nil, err
 	}
 	return ssh.PublicKeys(key), nil
+}
+
+func getCertificateAuth(privatekey string, certificate string) (ssh.AuthMethod, error) {
+	key, err := os.ReadFile(privatekey)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to read private key: '%s' %v", privatekey, err)
+	}
+
+	// Create the Signer for this private key.
+	signer, err := ssh.ParsePrivateKey(key)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to parse private key: '%s' %v", privatekey, err)
+	}
+
+	// Load the certificate
+	cert, err := os.ReadFile(certificate)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to read certificate file: '%s' %v", certificate, err)
+	}
+
+	pk, _, _, _, err := ssh.ParseAuthorizedKey(cert)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to parse public key: '%s' %v", certificate, err)
+	}
+
+	certSigner, err := ssh.NewCertSigner(pk.(*ssh.Certificate), signer)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to create cert signer: %v", err)
+	}
+
+	return ssh.PublicKeys(certSigner), nil
 }
 
 func hostKeyCallback(metric *Metric, target *config.Target, logger log.Logger) ssh.HostKeyCallback {
