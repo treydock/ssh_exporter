@@ -38,18 +38,30 @@ const (
 var knownHosts *os.File
 
 func publicKeyHandler(ctx ssh.Context, key ssh.PublicKey) bool {
-	buffer, err := os.ReadFile("testdata/id_rsa_test1.pub")
+	pubKeyBuffer, err := os.ReadFile("testdata/id_rsa_test1.pub")
 	if err != nil {
 		fmt.Printf("ERROR reading public key testdata/id_rsa_test1.pub: %s", err)
 		os.Exit(1)
 	}
-	goodKey, _, _, _, err := ssh.ParseAuthorizedKey(buffer)
+	pubKey, _, _, _, err := ssh.ParseAuthorizedKey(pubKeyBuffer)
 	if err != nil {
 		fmt.Printf("ERROR parsing public key testdata/id_rsa_test1.pub: %s", err)
 		os.Exit(1)
 	}
+	pubCertBuffer, err := os.ReadFile("testdata/id_rsa_test1-cert.pub")
+	if err != nil {
+		fmt.Printf("ERROR reading public key testdata/id_rsa_test1-cert.pub: %s", err)
+		os.Exit(1)
+	}
+	pubCert, _, _, _, err := ssh.ParseAuthorizedKey(pubCertBuffer)
+	if err != nil {
+		fmt.Printf("ERROR parsing public cert key testdata/id_rsa_test1-cert.pub: %s", err)
+		os.Exit(1)
+	}
 
-	if ssh.KeysEqual(key, goodKey) {
+	if ssh.KeysEqual(key, pubKey) {
+		return true
+	} else if ssh.KeysEqual(key, pubCert) {
 		return true
 	} else {
 		return false
@@ -421,6 +433,40 @@ func TestCollectorPrivateKey(t *testing.T) {
 	}
 }
 
+func TestCollectorCert(t *testing.T) {
+	expected := `
+	# HELP ssh_failure Indicates a failure
+	# TYPE ssh_failure gauge
+	ssh_failure{reason="command-error"} 0
+	ssh_failure{reason="command-output"} 0
+	ssh_failure{reason="error"} 0
+	ssh_failure{reason="timeout"} 0
+	# HELP ssh_success SSH connection was successful
+	# TYPE ssh_success gauge
+	ssh_success 1
+	`
+	target := &config.Target{
+		Host:        fmt.Sprintf("localhost:%d", listen),
+		User:        "test",
+		PrivateKey:  "testdata/id_rsa_test1",
+		Certificate: "testdata/id_rsa_test1-cert.pub",
+		Timeout:     2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	gatherers := setupGatherer(collector)
+	if val, err := testutil.GatherAndCount(gatherers); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	} else if val != 6 {
+		t.Errorf("Unexpected collection count %d, expected 6", val)
+	}
+	if err := testutil.GatherAndCompare(gatherers, strings.NewReader(expected),
+		"ssh_success", "ssh_failure", "ssh_output"); err != nil {
+		t.Errorf("unexpected collecting result:\n%s", err)
+	}
+}
+
 func TestCollectorKnownHosts(t *testing.T) {
 	expected := `
 	# HELP ssh_failure Indicates a failure
@@ -529,6 +575,74 @@ func TestCollectDNEKey(t *testing.T) {
 		User:       "test",
 		PrivateKey: "testdata/dne",
 		Timeout:    2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	metric := collector.collect()
+	if metric.FailureReason != "error" {
+		t.Errorf("Expected failure reason to be error, got %s", metric.FailureReason)
+	}
+}
+
+func TestCollectDNEKeyCert(t *testing.T) {
+	target := &config.Target{
+		Host:        fmt.Sprintf("localhost:%d", listen),
+		User:        "test",
+		PrivateKey:  "testdata/dne",
+		Certificate: "testdata/id_rsa_test1-cert.pub",
+		Timeout:     2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	metric := collector.collect()
+	if metric.FailureReason != "error" {
+		t.Errorf("Expected failure reason to be error, got %s", metric.FailureReason)
+	}
+}
+
+func TestCollectDNECert(t *testing.T) {
+	target := &config.Target{
+		Host:        fmt.Sprintf("localhost:%d", listen),
+		User:        "test",
+		PrivateKey:  "testdata/id_rsa_test1",
+		Certificate: "testdata/dne",
+		Timeout:     2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	metric := collector.collect()
+	if metric.FailureReason != "error" {
+		t.Errorf("Expected failure reason to be error, got %s", metric.FailureReason)
+	}
+}
+
+func TestCollectBadCert(t *testing.T) {
+	target := &config.Target{
+		Host:        fmt.Sprintf("localhost:%d", listen),
+		User:        "test",
+		PrivateKey:  "testdata/id_rsa_test1",
+		Certificate: "testdata/id_rsa_test1",
+		Timeout:     2,
+	}
+	w := log.NewSyncWriter(os.Stderr)
+	logger := log.NewLogfmtLogger(w)
+	collector := NewCollector(target, logger)
+	metric := collector.collect()
+	if metric.FailureReason != "error" {
+		t.Errorf("Expected failure reason to be error, got %s", metric.FailureReason)
+	}
+}
+
+func TestCollectBadCertKey(t *testing.T) {
+	target := &config.Target{
+		Host:        fmt.Sprintf("localhost:%d", listen),
+		User:        "test",
+		PrivateKey:  "testdata/id_rsa_test1-cert.pub",
+		Certificate: "testdata/id_rsa_test1-cert.pub",
+		Timeout:     2,
 	}
 	w := log.NewSyncWriter(os.Stderr)
 	logger := log.NewLogfmtLogger(w)
