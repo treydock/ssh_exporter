@@ -1,3 +1,9 @@
+## 1.3.0-rc.0 / 2021-10-05
+
+### Changes
+
+* [ENCHANCEMENT] Support login with SSH user certificates
+
 ## 1.2.0 / 2021-04-23
 
 ### Changes
