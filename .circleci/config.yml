@@ -2,8 +2,8 @@
 version: 2.1
 
 orbs:
-  prometheus: prometheus/prometheus@0.8.0
-  codecov: codecov/codecov@3.1.1
+  prometheus: prometheus/prometheus@0.15.0
+  codecov: codecov/codecov@3.2.2
 
 executors:
   # Whenever the Go version is updated here, .promu.yml should
