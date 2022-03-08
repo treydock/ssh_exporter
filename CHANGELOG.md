@@ -1,3 +1,8 @@
+## 1.4.0 / 2022-03-08
+
+* Update Go to 1.17
+* Update Go module dependencies
+
 ## 1.3.0 / 2021-10-05
 
 ### Changes
