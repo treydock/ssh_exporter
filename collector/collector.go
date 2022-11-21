@@ -149,9 +149,6 @@ func (c *Collector) collect() Metric {
 			var cmdBuffer bytes.Buffer
 			session.Stdout = &cmdBuffer
 			commanderror = session.Run(c.target.Command)
-			if commanderror != nil {
-				return
-			}
 			metric.Output = cmdBuffer.String()
 		}
 		if !timeout {
