@@ -1,3 +1,7 @@
+## 1.4.1 / 2022-11-21
+
+* Fix incorrect timeout when SSH command fails (#25)
+
 ## 1.4.0 / 2022-03-08
 
 * Update Go to 1.17
