@@ -9,7 +9,7 @@
 
 The SSH exporter attempts to make an SSH connection to a remote system and optionally run a command and test output.
 
-This expecter is intended to query multiple SSH servers from an external host.
+This exporter is intended to query multiple SSH servers from an external host.
 
 The `/ssh` metrics endpoint exposes SSH metrics and requires the `target` parameter.
 The `module` parameter can also be used to select which configuration module to use, the default module is `default`.
