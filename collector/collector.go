@@ -122,7 +122,7 @@ func (c *Collector) collect() Metric {
 			ssh.KeyboardInteractiveChallenge(func(name, instruction string, questions []string, echos []bool) ([]string, error) {
 				// assumes password is the only answer to everything
 				answers := make([]string, len(questions))
-				for i, _ := range answers {
+				for i := range answers {
 					answers[i] = c.target.Password
 				}
 				return answers, nil
