@@ -99,7 +99,7 @@ func (c *Collector) collect() Metric {
 	timeout := false
 	var metric Metric
 	var auth []ssh.AuthMethod
-	var sessionerror, autherror, commanderror error
+	var sessionerror, commanderror error
 
 	if c.target.Certificate != "" {
 		authMethod, autherror := getCertificateAuth(c.target.PrivateKey, c.target.Certificate)
