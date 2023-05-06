@@ -98,30 +98,42 @@ func (c *Collector) collect() Metric {
 	c1 := make(chan int, 1)
 	timeout := false
 	var metric Metric
-	var auth ssh.AuthMethod
-	var sessionerror, autherror, commanderror error
+	var auth []ssh.AuthMethod
+	var sessionerror, commanderror error
 
 	if c.target.Certificate != "" {
-		auth, autherror = getCertificateAuth(c.target.PrivateKey, c.target.Certificate)
+		authMethod, autherror := getCertificateAuth(c.target.PrivateKey, c.target.Certificate)
 		if autherror != nil {
 			metric.FailureReason = "error"
 			level.Error(c.logger).Log("msg", "Error setting up certificate auth", "err", autherror)
 			return metric
 		}
+		auth = []ssh.AuthMethod{authMethod}
 	} else if c.target.PrivateKey != "" {
-		auth, autherror = getPrivateKeyAuth(c.target.PrivateKey)
+		authMethod, autherror := getPrivateKeyAuth(c.target.PrivateKey)
 		if autherror != nil {
 			metric.FailureReason = "error"
 			level.Error(c.logger).Log("msg", "Error setting up private key auth", "err", autherror)
 			return metric
 		}
+		auth = []ssh.AuthMethod{authMethod}
 	} else {
-		auth = ssh.Password(c.target.Password)
+		auth = []ssh.AuthMethod{
+			ssh.KeyboardInteractiveChallenge(func(name, instruction string, questions []string, echos []bool) ([]string, error) {
+				// assumes password is the only answer to everything
+				answers := make([]string, len(questions))
+				for i := range answers {
+					answers[i] = c.target.Password
+				}
+				return answers, nil
+			}),
+			ssh.Password(c.target.Password),
+		}
 	}
 
 	sshConfig := &ssh.ClientConfig{
 		User:              c.target.User,
-		Auth:              []ssh.AuthMethod{auth},
+		Auth:              auth,
 		HostKeyCallback:   hostKeyCallback(&metric, c.target, c.logger),
 		HostKeyAlgorithms: c.target.HostKeyAlgorithms,
 		Timeout:           time.Duration(c.target.Timeout) * time.Second,
