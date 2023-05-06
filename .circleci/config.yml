@@ -2,7 +2,7 @@
 version: 2.1
 
 orbs:
-  prometheus: prometheus/prometheus@0.16.0
+  prometheus: prometheus/prometheus@0.17.1
   codecov: codecov/codecov@3.2.2
 
 executors:
@@ -10,7 +10,7 @@ executors:
   # also be updated.
   golang:
     docker:
-    - image: circleci/golang:1.17
+    - image: cimg/go:1.20.3
 
 jobs:
   test:

@@ -1,6 +1,6 @@
 module github.com/treydock/ssh_exporter
 
-go 1.17
+go 1.20
 
 require (
 	github.com/gliderlabs/ssh v0.3.0
