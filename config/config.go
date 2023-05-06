@@ -18,7 +18,7 @@ import (
 	"os"
 	"sync"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin/v2"
 	yaml "gopkg.in/yaml.v3"
 )
 

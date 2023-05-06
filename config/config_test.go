@@ -16,7 +16,7 @@ package config
 import (
 	"testing"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin/v2"
 )
 
 func TestReloadConfigDefaults(t *testing.T) {
@@ -39,10 +39,10 @@ func TestReloadConfigDefaults(t *testing.T) {
 		t.Errorf("Module User does not match prometheus")
 	}
 	if module.Timeout != 10 {
-		t.Errorf("Module Timeout does not match default 10")
+		t.Errorf("Module Timeout does not match default 10, got %+v", module.Timeout)
 	}
 	if module.OutputTruncate != 50 {
-		t.Errorf("Module OutputTruncate does not match default 50")
+		t.Errorf("Module OutputTruncate does not match default 50, got %+v", module.OutputTruncate)
 	}
 }
 
