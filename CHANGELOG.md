@@ -1,3 +1,8 @@
+## 1.5.0 / 2023-05-06
+
+* Update to Go 1.20 and update Go module dependencies (#28)
+* Add support for KeyboardInteractiveChallenge (#27)
+ 
 ## 1.4.1 / 2022-11-21
 
 * Fix incorrect timeout when SSH command fails (#25)
