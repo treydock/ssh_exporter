@@ -22,9 +22,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/alecthomas/kingpin/v2"
 	"github.com/gliderlabs/ssh"
 	"github.com/go-kit/log"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 const (
