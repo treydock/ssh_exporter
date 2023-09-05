@@ -59,7 +59,7 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 			http.Error(w, fmt.Sprintf("Unknown module %s", t), http.StatusNotFound)
 			return
 		}
-		if u == {
+		if u == "" {
 			u = module.User
 		}
 		level.Debug(logger).Log("msg", "Loaded module", "module", module.ModuleName)
