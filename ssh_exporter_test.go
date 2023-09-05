@@ -69,6 +69,16 @@ func TestMetricsHandler(t *testing.T) {
 	}
 }
 
+func TestMetricsHandlerUser(t *testing.T) {
+	body, err := queryExporter(fmt.Sprintf("target=localhost:%d&user=test", sshPort), http.StatusOK)
+	if err != nil {
+		t.Fatalf("Unexpected error GET /ssh: %s", err.Error())
+	}
+	if !strings.Contains(body, "ssh_success 1") {
+		t.Errorf("Unexpected value for ssh_success\nGot:\n%s", body)
+	}
+}
+
 func TestMetricsHandlerNoTarget(t *testing.T) {
 	_, _ = queryExporter("", http.StatusBadRequest)
 }

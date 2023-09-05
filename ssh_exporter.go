@@ -53,16 +53,20 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 		if m == "" {
 			m = "default"
 		}
+		u := r.URL.Query().Get("user")
 		module, ok := c.Modules[m]
 		if !ok {
 			http.Error(w, fmt.Sprintf("Unknown module %s", t), http.StatusNotFound)
 			return
 		}
+		if u == "" {
+			u = module.User
+		}
 		level.Debug(logger).Log("msg", "Loaded module", "module", module.ModuleName)
 
 		target := &config.Target{
 			Host:              t,
-			User:              module.User,
+			User:              u,
 			Password:          module.Password,
 			PrivateKey:        module.PrivateKey,
 			Certificate:       module.Certificate,
