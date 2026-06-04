@@ -15,16 +15,15 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/alecthomas/kingpin/v2"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/promlog"
-	"github.com/prometheus/common/promlog/flag"
+	"github.com/prometheus/common/promslog"
+	"github.com/prometheus/common/promslog/flag"
 	"github.com/prometheus/common/version"
 	"github.com/treydock/ssh_exporter/collector"
 	"github.com/treydock/ssh_exporter/config"
@@ -40,7 +39,7 @@ var (
 	listenAddress = kingpin.Flag("web.listen-address", "Address to listen on for web interface and telemetry.").Default(":9312").String()
 )
 
-func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
+func metricsHandler(c *config.Config, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		registry := prometheus.NewRegistry()
 
@@ -58,7 +57,7 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 			http.Error(w, fmt.Sprintf("Unknown module %s", t), http.StatusNotFound)
 			return
 		}
-		level.Debug(logger).Log("msg", "Loaded module", "module", module.ModuleName)
+		logger.Debug("Loaded module", "module", module.ModuleName)
 
 		target := &config.Target{
 			Host:              t,
@@ -74,7 +73,7 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 			OutputMetric:      module.OutputMetric,
 			OutputTruncate:    module.OutputTruncate,
 		}
-		sshCollector := collector.NewCollector(target, log.With(logger, "target", target.Host))
+		sshCollector := collector.NewCollector(target, logger.With("target", target.Host))
 		registry.MustRegister(sshCollector)
 
 		gatherers := prometheus.Gatherers{registry}
@@ -85,15 +84,15 @@ func metricsHandler(c *config.Config, logger log.Logger) http.HandlerFunc {
 	}
 }
 
-func run(logger log.Logger) {
-	level.Info(logger).Log("msg", "Starting ssh_exporter", "version", version.Info())
-	level.Info(logger).Log("msg", "Build context", "build_context", version.BuildContext())
-	level.Info(logger).Log("msg", "Starting Server", "address", *listenAddress)
+func run(logger *slog.Logger) {
+	logger.Info("Starting ssh_exporter", "version", version.Info())
+	logger.Info("Build context", "build_context", version.BuildContext())
+	logger.Info("Starting Server", "address", *listenAddress)
 
 	sc := &config.SafeConfig{}
 
 	if err := sc.ReloadConfig(*configFile); err != nil {
-		level.Error(logger).Log("msg", "Error loading config", "err", err)
+		logger.Error("Error loading config", "err", err)
 		os.Exit(1)
 	}
 
@@ -112,19 +111,19 @@ func run(logger log.Logger) {
 	http.Handle(metricsEndpoint, promhttp.Handler())
 	err := http.ListenAndServe(*listenAddress, nil)
 	if err != nil {
-		level.Error(logger).Log("err", err)
+		logger.Error("Server error", "err", err)
 		os.Exit(1)
 	}
 }
 
 func main() {
-	promlogConfig := &promlog.Config{}
-	flag.AddFlags(kingpin.CommandLine, promlogConfig)
+	promslogConfig := &promslog.Config{}
+	flag.AddFlags(kingpin.CommandLine, promslogConfig)
 	kingpin.Version(version.Print("ssh_exporter"))
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
-	logger := promlog.New(promlogConfig)
+	logger := promslog.New(promslogConfig)
 
 	run(logger)
 }

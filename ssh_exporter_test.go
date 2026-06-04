@@ -16,6 +16,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -24,7 +25,6 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/gliderlabs/ssh"
-	"github.com/go-kit/log"
 )
 
 const (
@@ -47,8 +47,7 @@ func TestMain(m *testing.M) {
 			os.Exit(1)
 		}
 	}()
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	go func() {
 		run(logger)
 	}()

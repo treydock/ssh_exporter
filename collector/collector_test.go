@@ -18,12 +18,12 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/gliderlabs/ssh"
-	"github.com/go-kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/treydock/ssh_exporter/config"
@@ -137,8 +137,7 @@ func TestCollector(t *testing.T) {
 		Password: "test",
 		Timeout:  2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
@@ -172,8 +171,7 @@ func TestCollectorCommand(t *testing.T) {
 		CommandExpect: "load average",
 		Timeout:       2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
@@ -212,8 +210,7 @@ func TestCollectorCommandOutputMetric(t *testing.T) {
 		OutputTruncate: 50,
 		Timeout:        2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
@@ -252,8 +249,7 @@ func TestCollectorCommandOutputMetricNoTruncate(t *testing.T) {
 		OutputTruncate: -1,
 		Timeout:        2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
@@ -287,7 +283,7 @@ func TestCollectorCommandOutputError(t *testing.T) {
 		CommandExpect: "foobar",
 		Timeout:       2,
 	}
-	collector := NewCollector(target, log.NewNopLogger())
+	collector := NewCollector(target, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
 		t.Errorf("Unexpected error: %v", err)
@@ -318,8 +314,7 @@ func TestCollectorTimeoutDial(t *testing.T) {
 		Password: "test",
 		Timeout:  -2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
@@ -352,8 +347,7 @@ func TestCollectorTimeoutCommand(t *testing.T) {
 		Command:  "sleep 1",
 		Timeout:  0,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
@@ -385,8 +379,7 @@ func TestCollectorError(t *testing.T) {
 		Password: "foobar",
 		Timeout:  2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
@@ -418,8 +411,7 @@ func TestCollectorPrivateKey(t *testing.T) {
 		PrivateKey: "testdata/id_rsa_test1",
 		Timeout:    2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
@@ -452,8 +444,7 @@ func TestCollectorCert(t *testing.T) {
 		Certificate: "testdata/id_rsa_test1-cert.pub",
 		Timeout:     2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
@@ -486,8 +477,7 @@ func TestCollectorKnownHosts(t *testing.T) {
 		KnownHosts: knownHosts.Name(),
 		Timeout:    2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
@@ -520,8 +510,7 @@ func TestCollectorKnownHostsError(t *testing.T) {
 		KnownHosts: knownHosts.Name(),
 		Timeout:    2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
@@ -554,8 +543,7 @@ func TestCollectorKnownHostsDNE(t *testing.T) {
 		KnownHosts: "/dne",
 		Timeout:    2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	gatherers := setupGatherer(collector)
 	if val, err := testutil.GatherAndCount(gatherers); err != nil {
@@ -576,8 +564,7 @@ func TestCollectDNEKey(t *testing.T) {
 		PrivateKey: "testdata/dne",
 		Timeout:    2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	metric := collector.collect()
 	if metric.FailureReason != "error" {
@@ -593,8 +580,7 @@ func TestCollectDNEKeyCert(t *testing.T) {
 		Certificate: "testdata/id_rsa_test1-cert.pub",
 		Timeout:     2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	metric := collector.collect()
 	if metric.FailureReason != "error" {
@@ -610,8 +596,7 @@ func TestCollectDNECert(t *testing.T) {
 		Certificate: "testdata/dne",
 		Timeout:     2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	metric := collector.collect()
 	if metric.FailureReason != "error" {
@@ -627,8 +612,7 @@ func TestCollectBadCert(t *testing.T) {
 		Certificate: "testdata/id_rsa_test1",
 		Timeout:     2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	metric := collector.collect()
 	if metric.FailureReason != "error" {
@@ -644,8 +628,7 @@ func TestCollectBadCertKey(t *testing.T) {
 		Certificate: "testdata/id_rsa_test1-cert.pub",
 		Timeout:     2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	metric := collector.collect()
 	if metric.FailureReason != "error" {
@@ -660,8 +643,7 @@ func TestCollectBadKey(t *testing.T) {
 		PrivateKey: "testdata/id_rsa_test1.pub",
 		Timeout:    2,
 	}
-	w := log.NewSyncWriter(os.Stderr)
-	logger := log.NewLogfmtLogger(w)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	collector := NewCollector(target, logger)
 	metric := collector.collect()
 	if metric.FailureReason != "error" {
