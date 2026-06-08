@@ -3,14 +3,14 @@ version: 2.1
 
 orbs:
   prometheus: prometheus/prometheus@0.17.1
-  codecov: codecov/codecov@3.2.2
+  codecov: codecov/codecov@6.0.0
 
 executors:
   # Whenever the Go version is updated here, .promu.yml should
   # also be updated.
   golang:
     docker:
-    - image: cimg/go:1.20.3
+    - image: cimg/go:1.25.11
 
 jobs:
   test:
@@ -20,7 +20,7 @@ jobs:
     - run: make
     - run: make coverage
     - codecov/upload:
-        file: coverage.txt
+        files: coverage.txt
     - prometheus/store_artifact:
         file: ssh_exporter
 workflows:

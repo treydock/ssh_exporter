@@ -71,25 +71,25 @@ func (sc *SafeConfig) ReloadConfig(configFile string) error {
 	var c = &Config{}
 	yamlReader, err := os.Open(configFile)
 	if err != nil {
-		return fmt.Errorf("Error reading config file %s: %s", configFile, err)
+		return fmt.Errorf("error reading config file %s: %s", configFile, err)
 	}
 	defer yamlReader.Close()
 	decoder := yaml.NewDecoder(yamlReader)
 	decoder.KnownFields(true)
 	if err := decoder.Decode(c); err != nil {
-		return fmt.Errorf("Error parsing config file %s: %s", configFile, err)
+		return fmt.Errorf("error parsing config file %s: %s", configFile, err)
 	}
 	for key := range c.Modules {
 		module := c.Modules[key]
 		module.ModuleName = key
 		if module.User == "" {
-			return fmt.Errorf("Module %s must define 'user' value", key)
+			return fmt.Errorf("module %s must define 'user' value", key)
 		}
 		if module.Password == "" && module.PrivateKey == "" {
-			return fmt.Errorf("Module %s must define 'password' or 'private_key' value", key)
+			return fmt.Errorf("module %s must define 'password' or 'private_key' value", key)
 		}
 		if module.Certificate != "" && module.PrivateKey == "" {
-			return fmt.Errorf("Module %s must define 'private_key' if it defines a 'certificate' value", key)
+			return fmt.Errorf("module %s must define 'private_key' if it defines a 'certificate' value", key)
 		}
 		if module.Timeout == 0 {
 			module.Timeout = *defaultTimeout
