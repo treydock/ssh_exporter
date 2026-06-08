@@ -1,3 +1,8 @@
+## 1.6.0 / 2026-06-08
+
+* Upgrade to Go 1.25 (#33)
+* refactor(logging): replace promlog with promslog (#32)
+
 ## 1.5.0 / 2023-05-06
 
 * Update to Go 1.20 and update Go module dependencies (#28)
