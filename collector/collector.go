@@ -17,14 +17,13 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/treydock/ssh_exporter/config"
 	"golang.org/x/crypto/ssh"
@@ -47,10 +46,10 @@ type Collector struct {
 	Failure  *prometheus.Desc
 	Output   *prometheus.Desc
 	target   *config.Target
-	logger   log.Logger
+	logger   *slog.Logger
 }
 
-func NewCollector(target *config.Target, logger log.Logger) *Collector {
+func NewCollector(target *config.Target, logger *slog.Logger) *Collector {
 	return &Collector{
 		Success: prometheus.NewDesc(prometheus.BuildFQName(namespace, "", "success"),
 			"SSH connection was successful", nil, nil),
@@ -73,7 +72,7 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
-	level.Debug(c.logger).Log("msg", "Collecting SSH metrics")
+	c.logger.Debug("Collecting SSH metrics")
 	failureReasons := []string{"error", "timeout", "command-error", "command-output"}
 	collectTime := time.Now()
 
@@ -105,7 +104,7 @@ func (c *Collector) collect() Metric {
 		authMethod, autherror := getCertificateAuth(c.target.PrivateKey, c.target.Certificate)
 		if autherror != nil {
 			metric.FailureReason = "error"
-			level.Error(c.logger).Log("msg", "Error setting up certificate auth", "err", autherror)
+			c.logger.Error("Error setting up certificate auth", "err", autherror)
 			return metric
 		}
 		auth = []ssh.AuthMethod{authMethod}
@@ -113,7 +112,7 @@ func (c *Collector) collect() Metric {
 		authMethod, autherror := getPrivateKeyAuth(c.target.PrivateKey)
 		if autherror != nil {
 			metric.FailureReason = "error"
-			level.Error(c.logger).Log("msg", "Error setting up private key auth", "err", autherror)
+			c.logger.Error("Error setting up private key auth", "err", autherror)
 			return metric
 		}
 		auth = []ssh.AuthMethod{authMethod}
@@ -145,7 +144,7 @@ func (c *Collector) collect() Metric {
 		} else {
 			metric.FailureReason = "error"
 		}
-		level.Error(c.logger).Log("msg", "Failed to establish SSH connection", "err", err)
+		c.logger.Error("Failed to establish SSH connection", "err", err)
 		return metric
 	}
 	defer connection.Close()
@@ -174,25 +173,24 @@ func (c *Collector) collect() Metric {
 		timeout = true
 		close(c1)
 		metric.FailureReason = "timeout"
-		level.Error(c.logger).Log("msg", "Timeout establishing SSH session")
+		c.logger.Error("Timeout establishing SSH session")
 		return metric
 	}
 	close(c1)
 	if sessionerror != nil {
 		metric.FailureReason = "error"
-		level.Error(c.logger).Log("msg", "Error establishing SSH session", "err", sessionerror)
+		c.logger.Error("Error establishing SSH session", "err", sessionerror)
 		return metric
 	}
 	if commanderror != nil {
 		metric.FailureReason = "command-error"
-		level.Error(c.logger).Log("msg", "Error executing command", "err", commanderror, "command", c.target.Command)
+		c.logger.Error("Error executing command", "err", commanderror, "command", c.target.Command)
 		return metric
 	}
 	if c.target.Command != "" && c.target.CommandExpect != "" {
 		commandExpectPattern := regexp.MustCompile(c.target.CommandExpect)
 		if !commandExpectPattern.MatchString(metric.Output) {
-			level.Error(c.logger).Log("msg", "Command output did not match expected value",
-				"output", metric.Output, "command", c.target.Command)
+			c.logger.Error("Command output did not match expected value", "output", metric.Output, "command", c.target.Command)
 			metric.FailureReason = "command-output"
 			return metric
 		}
@@ -244,17 +242,17 @@ func getCertificateAuth(privatekey string, certificate string) (ssh.AuthMethod, 
 	return ssh.PublicKeys(certSigner), nil
 }
 
-func hostKeyCallback(metric *Metric, target *config.Target, logger log.Logger) ssh.HostKeyCallback {
+func hostKeyCallback(metric *Metric, target *config.Target, logger *slog.Logger) ssh.HostKeyCallback {
 	return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 		var hostKeyCallback ssh.HostKeyCallback
 		var err error
 		if target.KnownHosts != "" {
 			publicKey := base64.StdEncoding.EncodeToString(key.Marshal())
-			level.Debug(logger).Log("msg", "Verify SSH known hosts", "hostname", hostname, "remote", remote.String(), "key", publicKey)
+			logger.Debug("Verify SSH known hosts", "hostname", hostname, "remote", remote.String(), "key", publicKey)
 			hostKeyCallback, err = knownhosts.New(target.KnownHosts)
 			if err != nil {
 				metric.FailureReason = "error"
-				level.Error(logger).Log("msg", "Error creating hostkeycallback function", "err", err)
+				logger.Error("Error creating hostkeycallback function", "err", err)
 				return err
 			}
 		} else {
