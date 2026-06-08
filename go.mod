@@ -1,6 +1,6 @@
 module github.com/treydock/ssh_exporter
 
-go 1.20
+go 1.25
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.3.2

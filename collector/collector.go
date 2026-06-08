@@ -216,29 +216,29 @@ func getPrivateKeyAuth(privatekey string) (ssh.AuthMethod, error) {
 func getCertificateAuth(privatekey string, certificate string) (ssh.AuthMethod, error) {
 	key, err := os.ReadFile(privatekey)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read private key: '%s' %v", privatekey, err)
+		return nil, fmt.Errorf("unable to read private key: '%s' %v", privatekey, err)
 	}
 
 	// Create the Signer for this private key.
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to parse private key: '%s' %v", privatekey, err)
+		return nil, fmt.Errorf("unable to parse private key: '%s' %v", privatekey, err)
 	}
 
 	// Load the certificate
 	cert, err := os.ReadFile(certificate)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read certificate file: '%s' %v", certificate, err)
+		return nil, fmt.Errorf("unable to read certificate file: '%s' %v", certificate, err)
 	}
 
 	pk, _, _, _, err := ssh.ParseAuthorizedKey(cert)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to parse public key: '%s' %v", certificate, err)
+		return nil, fmt.Errorf("unable to parse public key: '%s' %v", certificate, err)
 	}
 
 	certSigner, err := ssh.NewCertSigner(pk.(*ssh.Certificate), signer)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to create cert signer: %v", err)
+		return nil, fmt.Errorf("unable to create cert signer: %v", err)
 	}
 
 	return ssh.PublicKeys(certSigner), nil
