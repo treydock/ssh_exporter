@@ -1,3 +1,26 @@
-linters-settings:
-  errcheck:
-    exclude: .golangci.errcheck-exclude
+---
+version: "2"
+linters:
+  settings:
+    errcheck:
+      exclude-functions:
+        - (net/http.ResponseWriter).Write
+        - (github.com/go-kit/log.Logger).Log
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
