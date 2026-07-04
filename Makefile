@@ -2,6 +2,7 @@
 DOCKER_ARCHS ?= amd64 armv7 arm64 ppc64le s390x
 DOCKER_REPO	 ?= treydock
 export GOPATH ?= $(firstword $(subst :, ,$(shell go env GOPATH)))
+GOLANGCI_LINT_VERSION := v2.11.4
 
 include Makefile.common
 
